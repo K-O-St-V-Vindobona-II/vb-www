@@ -18,16 +18,28 @@ describe('GallerySection', () => {
     expect(w.text()).toContain('Galerie wird geladen')
   })
 
-  it('renders images with captions once loaded', async () => {
+  it('renders the images once loaded, without showing captions as visible text', async () => {
     mockFetchGalleryImages.mockResolvedValue([
-      { id: '1', url: 'https://x/1.jpg', caption: 'Ostermesse', width: 800, height: 600 },
+      { id: '1', url: 'https://x/1.jpg', caption: 'DSC_0227', width: 800, height: 600 },
       { id: '2', url: 'https://x/2.jpg', caption: null, width: 400, height: 300 },
     ])
     const w = mount(GallerySection)
     await flushPromises()
 
-    expect(w.text()).toContain('Ostermesse')
     expect(w.findAll('img')).toHaveLength(2)
+    expect(w.find('figcaption').exists()).toBe(false)
+    // Caption is only used as alt text (accessibility), never shown as visible text.
+    expect(w.text()).not.toContain('DSC_0227')
+  })
+
+  it('uses the caption as alt text for accessibility', async () => {
+    mockFetchGalleryImages.mockResolvedValue([
+      { id: '1', url: 'https://x/1.jpg', caption: 'Ostermesse', width: 800, height: 600 },
+    ])
+    const w = mount(GallerySection)
+    await flushPromises()
+
+    expect(w.find('img').attributes('alt')).toBe('Ostermesse')
   })
 
   it('shows an empty-state message when there are no images', async () => {

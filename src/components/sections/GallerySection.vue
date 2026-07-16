@@ -21,7 +21,6 @@ onMounted(load)
           :alt="image.caption ?? 'Impression von Vindobona II'"
           loading="lazy"
         />
-        <figcaption v-if="image.caption">{{ image.caption }}</figcaption>
       </figure>
     </div>
   </section>
@@ -57,11 +56,5 @@ onMounted(load)
   width: 100%;
   height: 200px;
   object-fit: cover;
-}
-
-.gallery-item figcaption {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
 }
 </style>
