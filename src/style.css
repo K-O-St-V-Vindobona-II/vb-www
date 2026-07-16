@@ -1,0 +1,98 @@
+/* Self-hosted fonts (not Google Fonts CDN) — avoids the GDPR/tracking
+   discussion around loading fonts.gstatic.com at runtime, common in AT/DE.
+   Both are Open Font License, redistribution is explicitly permitted.
+   Inlined here rather than a separate @import'd file: Vite 8's Rolldown CSS
+   pipeline fails to resolve relative @import paths from src/ (ENOENT on a
+   sibling file that demonstrably exists) - a known rough edge of this very
+   new bundler, not a real path/config error. */
+
+@font-face {
+  font-family: 'Catamaran';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/catamaran-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Catamaran';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/catamaran-bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/ptsans-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/ptsans-bold.woff2') format('woff2');
+}
+
+:root {
+  --color-primary: #a61a2c;
+  --color-primary-dark: #780404;
+  --color-accent: #65bc7b;
+  --color-text: #333333;
+  --color-text-muted: #747474;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f9f9fb;
+  --color-border: #e6e6e6;
+
+  --font-heading: 'Catamaran', Arial, Helvetica, sans-serif;
+  --font-body: 'PT Sans', Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Keeps anchor targets from hiding behind the sticky nav on jump. */
+  scroll-padding-top: 4rem;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+  /* Mobile-first: base font-size for small screens, scaled up via
+     min-width media queries in individual section components. */
+  font-size: 16px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 0.5em;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
