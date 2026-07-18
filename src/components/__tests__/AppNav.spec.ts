@@ -6,6 +6,9 @@ describe('AppNav', () => {
   it('renders a link for every section, in page order', () => {
     const w = mount(AppNav)
     const hrefs = w.findAll('a').map((a) => a.attributes('href'))
+    // Facebook is temporarily hidden (FACEBOOK_LINK_ENABLED = false in
+    // AppNav.vue) until the association clarifies why the page is
+    // unreachable - not expected here on purpose, see that flag's comment.
     expect(hrefs).toEqual([
       '#',
       '#about',
@@ -14,7 +17,6 @@ describe('AppNav', () => {
       '#mitglied-werden',
       '#kontakt',
       'https://intern.vindobona2.at/',
-      'https://www.facebook.com/vindobona2',
       'http://www.instagram.com/vindobona2',
     ])
   })

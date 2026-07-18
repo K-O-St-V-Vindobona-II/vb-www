@@ -3,22 +3,13 @@ import { ref } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 
 // Only tab titles live in data now — the tab bodies below contain real
-// markup (a hyperlink in tab 0, a list in tab 1), which a plain
-// `{{ tabs[activeTab].text }}` interpolation can't render without `v-html`
-// (forbidden by this repo's ESLint config for XSS-hardening reasons).
-const tabs = ['Der Anfang', 'MKV – Unser Dachverband', 'Heute']
+// markup (a hyperlink in tab 0), which a plain `{{ tabs[activeTab].text }}`
+// interpolation can't render without `v-html` (forbidden by this repo's
+// ESLint config for XSS-hardening reasons).
+const tabs = ['Der Anfang', 'MKV', 'Heute']
 
 const activeTab = ref(0)
 const { target, visible } = useScrollReveal()
-
-const friendshipConnections = [
-  'K.Ö.St.V. Ostaricia Wien',
-  'K.Ö.St.V. Kreuzenstein Wien',
-  'K.Ö.St.V. Rugia Waidhofen/Thaya',
-  'GV Zähringia Freiburg',
-  'K.Ö.St.V. Donaumark',
-  'K.Ö.St.V. Vindobona nova',
-]
 </script>
 
 <template>
@@ -81,12 +72,6 @@ const friendshipConnections = [
           (Bekenntnis zur Heimat Österreich), scientia (lebenslanges Lernen), amicitia
           (Lebensfreundschaft).
         </p>
-        <div class="friendships">
-          <p class="friendships-heading">Unsere Freundschaftsverbindungen:</p>
-          <ul class="friendship-chips">
-            <li v-for="name in friendshipConnections" :key="name">{{ name }}</li>
-          </ul>
-        </div>
       </template>
 
       <template v-else>
@@ -123,10 +108,15 @@ const friendshipConnections = [
   padding: 3rem 1.5rem;
 }
 
+/* CSS Grid, not flex-wrap: three equal-width columns always, even on very
+   narrow screens where a longer label needs two lines — the tab-indicator's
+   width/position math below assumes exactly three same-width slots in a
+   single row, which flex-wrap would silently break by letting a button
+   wrap onto its own row. */
 .tab-buttons {
   position: relative;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.25rem;
   margin-bottom: 1.5rem;
   padding: 0.3rem;
@@ -137,11 +127,10 @@ const friendshipConnections = [
 .tab-buttons button {
   position: relative;
   z-index: 1;
-  flex: 1 1 auto;
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 700;
-  padding: 0.6rem 0.75rem;
+  padding: 0.6rem 0.5rem;
   border: none;
   border-radius: var(--radius-lg);
   background: transparent;
@@ -177,32 +166,6 @@ const friendshipConnections = [
 
 .tab-content a {
   font-weight: 700;
-}
-
-.friendships {
-  margin-top: 1.5rem;
-}
-
-.friendships-heading {
-  font-weight: 700;
-  margin: 0 0 0.6rem;
-}
-
-.friendship-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.friendship-chips li {
-  font-size: 0.85rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  background: var(--color-bg-alt);
-  border: 1px solid var(--color-border);
 }
 
 .mkv-video {

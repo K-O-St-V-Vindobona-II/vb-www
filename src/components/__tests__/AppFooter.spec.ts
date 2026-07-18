@@ -9,10 +9,12 @@ describe('AppFooter', () => {
     expect(w.text()).toContain(String(new Date().getFullYear()))
   })
 
-  it('links to Facebook', () => {
+  it('hides the Facebook link while its page is unreachable', () => {
+    // FACEBOOK_LINK_ENABLED = false in AppFooter.vue - temporary until the
+    // association clarifies what's going on with their account.
     const w = mount(AppFooter)
     const hrefs = w.findAll('a').map((a) => a.attributes('href'))
-    expect(hrefs).toContain('https://www.facebook.com/vindobona2')
+    expect(hrefs).not.toContain('https://www.facebook.com/vindobona2')
   })
 
   it('opens a real Impressum dialog instead of a dead anchor', () => {
