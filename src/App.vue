@@ -5,6 +5,7 @@ import HeroSection from '@/components/sections/HeroSection.vue'
 import AboutSection from '@/components/sections/AboutSection.vue'
 import ProgrammSection from '@/components/sections/ProgrammSection.vue'
 import GallerySection from '@/components/sections/GallerySection.vue'
+import TestimonialsSection from '@/components/sections/TestimonialsSection.vue'
 import MitgliedWerdenSection from '@/components/sections/MitgliedWerdenSection.vue'
 import ContactSection from '@/components/sections/ContactSection.vue'
 </script>
@@ -16,6 +17,7 @@ import ContactSection from '@/components/sections/ContactSection.vue'
     <AboutSection />
     <GallerySection />
     <ProgrammSection />
+    <TestimonialsSection />
     <MitgliedWerdenSection />
     <ContactSection />
   </main>

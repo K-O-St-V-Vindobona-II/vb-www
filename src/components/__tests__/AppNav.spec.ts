@@ -30,4 +30,28 @@ describe('AppNav', () => {
     const w = mount(AppNav)
     expect(w.text()).toContain('Vindobona II')
   })
+
+  it('toggles the mobile menu panel open and closed via the hamburger button', async () => {
+    const w = mount(AppNav)
+    const toggle = w.find('.menu-toggle')
+    const panel = w.find('#nav-panel')
+
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(panel.classes()).not.toContain('is-open')
+
+    await toggle.trigger('click')
+
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+    expect(panel.classes()).toContain('is-open')
+  })
+
+  it('closes the mobile menu after a section link is clicked', async () => {
+    const w = mount(AppNav)
+    await w.find('.menu-toggle').trigger('click')
+    expect(w.find('#nav-panel').classes()).toContain('is-open')
+
+    await w.find('a[href="#about"]').trigger('click')
+
+    expect(w.find('#nav-panel').classes()).not.toContain('is-open')
+  })
 })

@@ -41,15 +41,52 @@
 :root {
   --color-primary: #a61a2c;
   --color-primary-dark: #780404;
+  --color-primary-rgb: 166, 26, 44;
   --color-accent: #65bc7b;
   --color-text: #333333;
   --color-text-muted: #747474;
   --color-bg: #ffffff;
   --color-bg-alt: #f9f9fb;
+  --color-surface: #ffffff;
   --color-border: #e6e6e6;
 
   --font-heading: 'Catamaran', Arial, Helvetica, sans-serif;
   --font-body: 'PT Sans', Arial, Helvetica, sans-serif;
+
+  /* Shared elevation/radius scale so every redesigned section reaches for
+     the same "2026" look instead of inventing its own shadow per component. */
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-dark) 100%
+  );
+}
+
+/* Automatic dark mode: same custom-property names, dark-safe values — every
+   component below reads these tokens, so nothing else needs its own
+   dark-mode rules. Primary/accent hues stay recognizable, just lightened
+   for contrast against a dark surface. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #e35a6c;
+    --color-primary-dark: #ff8a94;
+    --color-primary-rgb: 227, 90, 108;
+    --color-accent: #7fd99a;
+    --color-text: #e8e6e6;
+    --color-text-muted: #a8a3a3;
+    --color-bg: #16100f;
+    --color-bg-alt: #1e1716;
+    --color-surface: #241b1a;
+    --color-border: #382c2a;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  }
 }
 
 * {
@@ -60,6 +97,13 @@ html {
   scroll-behavior: smooth;
   /* Keeps anchor targets from hiding behind the sticky nav on jump. */
   scroll-padding-top: 4rem;
+  color-scheme: light dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 html,
@@ -76,6 +120,9 @@ body {
   /* Mobile-first: base font-size for small screens, scaled up via
      min-width media queries in individual section components. */
   font-size: 16px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 h1,
@@ -95,4 +142,28 @@ a {
 img {
   max-width: 100%;
   display: block;
+}
+
+/* Scroll-reveal base state, toggled by the `useScrollReveal` composable.
+   `.is-visible` is applied as soon as the element enters the viewport (or
+   immediately, if the visitor prefers reduced motion). */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

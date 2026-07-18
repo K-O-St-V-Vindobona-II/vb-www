@@ -64,6 +64,14 @@ describe('ContactSection', () => {
     expect(w.text()).toContain('Serverfehler')
   })
 
+  it('shows the club address as visible text next to the map', () => {
+    const w = mount(ContactSection)
+    expect(w.text()).toContain('K.Ö.St.V. Vindobona II Wien')
+    expect(w.text()).toContain('Rooseveltplatz 8/Sout.')
+    expect(w.text()).toContain('1090 Wien')
+    expect(w.text()).toContain('Bitte bei „Vindobona“ anläuten!')
+  })
+
   it('disables the submit button while submitting', async () => {
     let resolveSubmit: () => void = () => {}
     mockSubmitContactForm.mockReturnValue(
