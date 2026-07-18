@@ -47,14 +47,12 @@ import heroImage from '@/assets/images/hero.jpg'
   }
 }
 
+/* Neutral dark gradient only — no brand-color tint, so the actual photo
+   stays recognizable instead of reading as a solid red wash. */
 .overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(var(--color-primary-rgb), 0.55) 0%,
-    rgba(0, 0, 0, 0.65) 100%
-  );
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.55) 100%);
 }
 
 .content {

@@ -3,6 +3,11 @@ import { ref } from 'vue'
 
 const year = new Date().getFullYear()
 
+// Facebook page is currently unreachable - hidden (not removed) until the
+// association clarifies what's going on with their account. Flip this back
+// to true to bring the link back; nothing else needs to change.
+const FACEBOOK_LINK_ENABLED = false
+
 // The legacy WordPress footer's "Impressum" link was already a dead `href="#"`
 // with no recoverable modal content (confirmed against the live production
 // HTML) — this dialog replaces it with real, confirmed content instead of
@@ -22,7 +27,13 @@ const closeImpressum = () => {
   <footer class="app-footer">
     <p>&copy; Copyright {{ year }} K.Ö.St.V. Vindobona II Wien | Alle Rechte vorbehalten</p>
     <div class="footer-links">
-      <a href="https://www.facebook.com/vindobona2" target="_blank" rel="noopener">Facebook</a>
+      <a
+        v-if="FACEBOOK_LINK_ENABLED"
+        href="https://www.facebook.com/vindobona2"
+        target="_blank"
+        rel="noopener"
+        >Facebook</a
+      >
       <button type="button" class="impressum-trigger" @click="openImpressum">Impressum</button>
     </div>
 
