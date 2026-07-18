@@ -38,4 +38,30 @@ describe('AboutSection', () => {
     await buttons[1]?.trigger('click')
     expect(w.find('iframe').exists()).toBe(true)
   })
+
+  it('links to the Stolpersteine page in the first tab', () => {
+    const w = mount(AboutSection)
+    const link = w.find('a[href="https://niemalswieder.at/Stolpersteine/Steine/1368"]')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes('target')).toBe('_blank')
+    expect(link.attributes('rel')).toBe('noopener')
+  })
+
+  it('lists all six friendship connections in the MKV tab', async () => {
+    const w = mount(AboutSection)
+    const buttons = w.findAll('button[role="tab"]')
+    await buttons[1]?.trigger('click')
+
+    expect(w.text()).toContain('Unsere Freundschaftsverbindungen:')
+    for (const name of [
+      'K.Ö.St.V. Ostaricia Wien',
+      'K.Ö.St.V. Kreuzenstein Wien',
+      'K.Ö.St.V. Rugia Waidhofen/Thaya',
+      'GV Zähringia Freiburg',
+      'K.Ö.St.V. Donaumark',
+      'K.Ö.St.V. Vindobona nova',
+    ]) {
+      expect(w.text()).toContain(name)
+    }
+  })
 })

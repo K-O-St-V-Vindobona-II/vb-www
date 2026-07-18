@@ -57,4 +57,44 @@ describe('GallerySection', () => {
 
     expect(w.text()).toContain('Netzwerkfehler')
   })
+
+  it('opens a lightbox with the enlarged image when a tile is clicked', async () => {
+    mockFetchGalleryImages.mockResolvedValue([
+      { id: '1', url: 'https://x/1.jpg', caption: 'Ostermesse', width: 800, height: 600 },
+    ])
+    const w = mount(GallerySection, { attachTo: document.body })
+    await flushPromises()
+
+    expect(w.find('dialog').exists()).toBe(false)
+
+    await w.find('.gallery-item-trigger').trigger('click')
+    await flushPromises()
+
+    const dialogImg = w.find('dialog img')
+    expect(dialogImg.exists()).toBe(true)
+    expect(dialogImg.attributes('src')).toBe('https://x/1.jpg')
+    expect(dialogImg.attributes('alt')).toBe('Ostermesse')
+    // The lightbox is not another place where captions leak out as visible text.
+    expect(w.find('dialog').text()).not.toContain('Ostermesse')
+
+    w.unmount()
+  })
+
+  it('closes the lightbox via the close button', async () => {
+    mockFetchGalleryImages.mockResolvedValue([
+      { id: '1', url: 'https://x/1.jpg', caption: null, width: 800, height: 600 },
+    ])
+    const w = mount(GallerySection, { attachTo: document.body })
+    await flushPromises()
+    await w.find('.gallery-item-trigger').trigger('click')
+    await flushPromises()
+    expect(w.find('dialog').exists()).toBe(true)
+
+    await w.find('.lightbox-close').trigger('click')
+    await flushPromises()
+
+    expect(w.find('dialog').exists()).toBe(false)
+
+    w.unmount()
+  })
 })

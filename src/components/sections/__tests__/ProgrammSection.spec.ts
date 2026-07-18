@@ -16,4 +16,13 @@ describe('ProgrammSection', () => {
     expect(w.text()).toContain('c.t.')
     expect(w.text()).toContain('Bude Vindobonae')
   })
+
+  it('links to the .ical download of the shared calendar', () => {
+    const w = mount(ProgrammSection)
+    const link = w.find('.ical-link')
+    expect(link.text()).toContain('Kalender als .ical herunterladen')
+    expect(link.attributes('href')).toBe(
+      'https://calendar.google.com/calendar/ical/h7d2qp0jlg603cvq2aabdn2k5o%40group.calendar.google.com/public/basic.ics',
+    )
+  })
 })
