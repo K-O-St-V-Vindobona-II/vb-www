@@ -13,6 +13,9 @@ kein Login, keine Client-seitige Routing-Bibliothek (Long-Page mit Anchor-Nav).
   über einen Mini-CMS-Bereich in `vb-intern` ("www-Administration" → "Galerie").
 - Der Veranstaltungskalender ist ein einfaches Google-Calendar-iframe-Embed
   (kein Custom-Styling, kein Backend-Proxy nötig).
+
+> Alle zugehörigen Repos liegen in der GitHub-Organisation
+> [K-O-St-V-Vindobona-II](https://github.com/K-O-St-V-Vindobona-II).
 - Das Kontaktformular postet an `POST /api/public/contact` (Honeypot-Feld statt
   reCAPTCHA — kein externer Dienst nötig).
 - Fonts (Catamaran, PT Sans) sind selbst gehostet (`src/assets/fonts/`), nicht
