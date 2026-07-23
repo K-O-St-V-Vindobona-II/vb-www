@@ -9,7 +9,10 @@ import { useScrollReveal } from '@/composables/useScrollReveal'
 const tabs = ['Der Anfang', 'MKV', 'Heute']
 
 const activeTab = ref(0)
+// target is bound via the template's `ref="target"` only, which vue-tsc's
+// project-references build mode doesn't trace for noUnusedLocals purposes.
 const { target, visible } = useScrollReveal()
+void target
 </script>
 
 <template>
