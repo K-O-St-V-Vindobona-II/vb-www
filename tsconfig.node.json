@@ -6,7 +6,12 @@
     "moduleResolution": "bundler",
     "types": ["node"],
     "noEmit": true,
+
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo"
   }
 }
