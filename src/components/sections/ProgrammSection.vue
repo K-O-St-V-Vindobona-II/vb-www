@@ -18,7 +18,10 @@ const hints = [
   'Die „offiziellen“ und „hochoffiziellen“ Veranstaltungen finden plen.col. („in vollen Farben“) statt. Auf ein entsprechendes Erscheinungsbild ist Wert zu legen.',
 ]
 
+// target is bound via the template's `ref="target"` only, which vue-tsc's
+// project-references build mode doesn't trace for noUnusedLocals purposes.
 const { target, visible } = useScrollReveal()
+void target
 </script>
 
 <template>

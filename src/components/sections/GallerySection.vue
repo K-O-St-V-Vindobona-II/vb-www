@@ -7,7 +7,10 @@ import { useScrollReveal } from '@/composables/useScrollReveal'
 const { images, loading, error, load } = useGallery()
 onMounted(load)
 
+// target is bound via the template's `ref="target"` only, which vue-tsc's
+// project-references build mode doesn't trace for noUnusedLocals purposes.
 const { target, visible } = useScrollReveal()
+void target
 
 // Click-to-enlarge lightbox, built on the native <dialog> element — no new
 // dependency needed. Captions stay alt-text-only here too (many migrated
