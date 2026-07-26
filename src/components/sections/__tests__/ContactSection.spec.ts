@@ -19,6 +19,25 @@ describe('ContactSection', () => {
     expect(honeypot.attributes('aria-hidden')).toBe('true')
   })
 
+  it('forwards a filled-in honeypot value to the backend for rejection', async () => {
+    // Real visitors never see/fill this field (hidden via CSS); a bot that
+    // blindly fills every input trips the backend's honeypot check because
+    // this value ends up non-empty in the payload.
+    mockSubmitContactForm.mockResolvedValue(undefined)
+    const w = mount(ContactSection)
+
+    await w.find('input[type="text"]').setValue('Max Mustermann')
+    await w.find('input[type="email"]').setValue('max@example.com')
+    await w.find('textarea').setValue('Hallo!')
+    await w.find('input[name="website"]').setValue('http://spam.example')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(mockSubmitContactForm).toHaveBeenCalledWith(
+      expect.objectContaining({ website: 'http://spam.example' }),
+    )
+  })
+
   it('submits the form with the entered values', async () => {
     mockSubmitContactForm.mockResolvedValue(undefined)
     const w = mount(ContactSection)
@@ -62,6 +81,19 @@ describe('ContactSection', () => {
     await flushPromises()
 
     expect(w.text()).toContain('Serverfehler')
+  })
+
+  it('shows a generic error message when the rejection is not an Error instance', async () => {
+    mockSubmitContactForm.mockRejectedValue('network down')
+    const w = mount(ContactSection)
+
+    await w.find('input[type="text"]').setValue('Max')
+    await w.find('input[type="email"]').setValue('max@example.com')
+    await w.find('textarea').setValue('Hallo!')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(w.text()).toContain('Nachricht konnte nicht gesendet werden.')
   })
 
   it('shows the club address as visible text next to the map', () => {

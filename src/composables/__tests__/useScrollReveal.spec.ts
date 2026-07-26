@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 
-function mountComposable() {
+function mountComposable(bindTarget = true) {
   let result!: ReturnType<typeof useScrollReveal>
   const wrapper = mount(
     defineComponent({
@@ -11,7 +11,7 @@ function mountComposable() {
         result = useScrollReveal()
         return { target: result.target, visible: result.visible }
       },
-      template: '<div ref="target" />',
+      template: bindTarget ? '<div ref="target" />' : '<div />',
     }),
   )
   return { wrapper, result }
@@ -34,6 +34,23 @@ describe('useScrollReveal', () => {
       vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia,
     )
     const { result } = mountComposable()
+    expect(result.visible.value).toBe(true)
+  })
+
+  it('becomes visible immediately when the target ref was never bound to an element', () => {
+    vi.stubGlobal(
+      'IntersectionObserver',
+      vi.fn().mockImplementation(function () {
+        return { observe: vi.fn(), disconnect: vi.fn() }
+      }),
+    )
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }))
+
+    // bindTarget=false: no `ref="target"` in the template, so it stays null
+    // through mount, hitting the composable's own "no element to observe"
+    // guard rather than the IntersectionObserver path.
+    const { result } = mountComposable(false)
+
     expect(result.visible.value).toBe(true)
   })
 

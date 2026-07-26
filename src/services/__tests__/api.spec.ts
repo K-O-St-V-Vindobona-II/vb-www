@@ -41,6 +41,15 @@ describe('api', () => {
 
       await expect(fetchGalleryImages()).rejects.toThrow('Galerie konnte nicht geladen werden.')
     })
+
+    it('falls back to a generic message when the JSON body has no string detail', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: async () => ({ detail: [{ msg: 'field required' }] }),
+      })
+
+      await expect(fetchGalleryImages()).rejects.toThrow('Galerie konnte nicht geladen werden.')
+    })
   })
 
   describe('submitContactForm', () => {
