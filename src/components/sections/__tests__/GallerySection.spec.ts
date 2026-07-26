@@ -97,4 +97,25 @@ describe('GallerySection', () => {
 
     w.unmount()
   })
+
+  it('closes the lightbox when the native dialog fires its own close event', async () => {
+    // Covers Escape/backdrop-click closing, which the browser handles itself
+    // and only notifies the app of via the dialog's native "close" event —
+    // distinct from clicking .lightbox-close, which calls closeImage() directly.
+    mockFetchGalleryImages.mockResolvedValue([
+      { id: '1', url: 'https://x/1.jpg', caption: null, width: 800, height: 600 },
+    ])
+    const w = mount(GallerySection, { attachTo: document.body })
+    await flushPromises()
+    await w.find('.gallery-item-trigger').trigger('click')
+    await flushPromises()
+    expect(w.find('dialog').exists()).toBe(true)
+
+    await w.find('dialog').trigger('close')
+    await flushPromises()
+
+    expect(w.find('dialog').exists()).toBe(false)
+
+    w.unmount()
+  })
 })
