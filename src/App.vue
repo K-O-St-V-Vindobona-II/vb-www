@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConsoleBanner from '@/components/ConsoleBanner.vue'
 import AppNav from '@/components/AppNav.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import HeroSection from '@/components/sections/HeroSection.vue'
@@ -11,6 +12,7 @@ import ContactSection from '@/components/sections/ContactSection.vue'
 </script>
 
 <template>
+  <ConsoleBanner />
   <AppNav />
   <main>
     <HeroSection />
