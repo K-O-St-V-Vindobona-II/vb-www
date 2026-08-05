@@ -1,22 +1,24 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
+import { useSiteContent } from '@/composables/useSiteContent'
 
-// Public Google Calendar (Simple Calendar plugin's _google_calendar_id, base64-decoded
-// during the WordPress content audit) — same calendar as on the legacy site, now
-// embedded via Google's own iframe instead of a custom-styled plugin.
-const CALENDAR_ID = 'h7d2qp0jlg603cvq2aabdn2k5o@group.calendar.google.com'
-const calendarSrc = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(
-  CALENDAR_ID,
-)}&ctz=Europe%2FVienna`
-const icalHref = `https://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`
+const { content, loading, error, load } = useSiteContent()
+onMounted(load)
 
-const hints = [
-  'Alle Veranstaltungen beginnen, je nach Angabe, c.t. (cum tempore, 15 Minuten nach der angegebenen Zeit) oder s.t. (sine tempore, pünktlich).',
-  'Alle Veranstaltungen finden auf der Bude Vindobonae statt, sofern nicht anders angegeben.',
-  'Die Convente und alle als „intern“ bezeichneten Veranstaltungen finden ohne Gäste statt.',
-  'Bei anderen Veranstaltungen sind Gäste willkommen — wenn du uns noch nicht kennst, bitten wir um kurze Voranmeldung.',
-  'Die „offiziellen“ und „hochoffiziellen“ Veranstaltungen finden plen.col. („in vollen Farben“) statt. Auf ein entsprechendes Erscheinungsbild ist Wert zu legen.',
-]
+const calendarSrc = computed(() => {
+  const calendarId = content.value?.settings.programm_calendar_id
+  if (!calendarId) return null
+  return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(
+    calendarId,
+  )}&ctz=Europe%2FVienna`
+})
+
+const icalHref = computed(() => {
+  const calendarId = content.value?.settings.programm_calendar_id
+  if (!calendarId) return null
+  return `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`
+})
 
 // target is bound via the template's `ref="target"` only, which vue-tsc's
 // project-references build mode doesn't trace for noUnusedLocals purposes.
@@ -33,27 +35,33 @@ void target
   >
     <h2>Programm</h2>
 
-    <iframe
-      :src="calendarSrc"
-      title="Veranstaltungskalender"
-      class="calendar-embed"
-      loading="lazy"
-    />
+    <p v-if="loading" class="status-message">Wird geladen&hellip;</p>
+    <p v-else-if="error" class="status-message">{{ error }}</p>
 
-    <a class="ical-link" :href="icalHref">
-      <span aria-hidden="true">⤓</span> Kalender als .ical herunterladen
-    </a>
+    <template v-else-if="content">
+      <iframe
+        v-if="calendarSrc"
+        :src="calendarSrc"
+        title="Veranstaltungskalender"
+        class="calendar-embed"
+        loading="lazy"
+      />
 
-    <div class="hinweise">
-      <h3>Hinweise</h3>
-      <ul class="hinweise-list">
-        <li v-for="hint in hints" :key="hint">
-          <span class="hint-icon" aria-hidden="true">✓</span>
-          <span>{{ hint }}</span>
-        </li>
-      </ul>
-      <p>Wenn du Fragen zu unseren Veranstaltungen hast, schreib uns einfach!</p>
-    </div>
+      <a v-if="icalHref" class="ical-link" :href="icalHref">
+        <span aria-hidden="true">⤓</span> Kalender als .ical herunterladen
+      </a>
+
+      <div class="hinweise">
+        <h3>Hinweise</h3>
+        <ul class="hinweise-list">
+          <li v-for="hint in content.programm_hints" :key="hint.id">
+            <span class="hint-icon" aria-hidden="true">✓</span>
+            <span>{{ hint.text }}</span>
+          </li>
+        </ul>
+        <p>Wenn du Fragen zu unseren Veranstaltungen hast, schreib uns einfach!</p>
+      </div>
+    </template>
   </section>
 </template>
 
@@ -62,6 +70,10 @@ void target
   max-width: 800px;
   margin: 0 auto;
   padding: 3rem 1.5rem;
+}
+
+.status-message {
+  color: var(--color-text-muted);
 }
 
 .calendar-embed {

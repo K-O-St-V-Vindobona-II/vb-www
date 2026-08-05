@@ -1,14 +1,58 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
-import AppNav from '../AppNav.vue'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import type { SiteContent } from '@/services/api'
+
+const mockFetchSiteContent = vi.fn()
+vi.mock('@/services/api', () => ({
+  fetchSiteContent: (...args: unknown[]) => mockFetchSiteContent(...args),
+}))
+
+const SITE_CONTENT: SiteContent = {
+  about_tabs: {
+    anfang: { title: 'Der Anfang', body: 'Text.' },
+    mkv: { title: 'MKV', body: 'Text.' },
+    heute: { title: 'Heute', body: 'Text.' },
+  },
+  settings: {
+    about_video_heading: 'Erfahre mehr',
+    about_video_youtube_id: 'abcdefghijk',
+    programm_calendar_id: 'abc@group.calendar.google.com',
+    gallery_heading: 'Eindrücke',
+  },
+  programm_hints: [],
+  quotes: [],
+  // Only enabled links ever appear here - the backend already filters
+  // (see public_site.py::get_site_content()). Facebook is seeded disabled,
+  // so it deliberately does not appear.
+  social_links: [
+    {
+      id: 2,
+      platform: 'instagram',
+      label: 'Instagram',
+      url: 'http://www.instagram.com/vindobona2',
+    },
+  ],
+}
 
 describe('AppNav', () => {
-  it('renders a link for every section, in page order', () => {
+  beforeEach(() => {
+    mockFetchSiteContent.mockReset().mockResolvedValue(SITE_CONTENT)
+    // useSiteContent.ts is a module-scoped singleton - each test needs a
+    // fresh module instance, so both it and the component (which imports
+    // it at module load time) must be re-imported after resetModules().
+    vi.resetModules()
+  })
+
+  async function mountNav() {
+    const { default: AppNav } = await import('../AppNav.vue')
     const w = mount(AppNav)
+    await flushPromises()
+    return w
+  }
+
+  it('renders a link for every section plus Intern and the enabled social links, in order', async () => {
+    const w = await mountNav()
     const hrefs = w.findAll('a').map((a) => a.attributes('href'))
-    // Facebook is temporarily hidden (FACEBOOK_LINK_ENABLED = false in
-    // AppNav.vue) until the association clarifies why the page is
-    // unreachable - not expected here on purpose, see that flag's comment.
     expect(hrefs).toEqual([
       '#',
       '#about',
@@ -21,20 +65,39 @@ describe('AppNav', () => {
     ])
   })
 
-  it('opens external links in a new tab', () => {
+  it('does not render a disabled social link (Facebook)', async () => {
+    const w = await mountNav()
+    const hrefs = w.findAll('a').map((a) => a.attributes('href'))
+    expect(hrefs).not.toContain('https://www.facebook.com/vindobona2')
+  })
+
+  it('shows only the Intern link before the social links have loaded', async () => {
+    mockFetchSiteContent.mockReturnValue(new Promise(() => {}))
+    const { default: AppNav } = await import('../AppNav.vue')
     const w = mount(AppNav)
+    const hrefs = w.findAll('a').map((a) => a.attributes('href'))
+    expect(hrefs).toContain('https://intern.vindobona2.at/')
+    expect(hrefs).not.toContain('http://www.instagram.com/vindobona2')
+  })
+
+  it('opens external links in a new tab', async () => {
+    const w = await mountNav()
     const internLink = w.find('a[href="https://intern.vindobona2.at/"]')
     expect(internLink.attributes('target')).toBe('_blank')
     expect(internLink.attributes('rel')).toBe('noopener')
+
+    const socialLink = w.find('a[href="http://www.instagram.com/vindobona2"]')
+    expect(socialLink.attributes('target')).toBe('_blank')
+    expect(socialLink.attributes('rel')).toBe('noopener')
   })
 
-  it('shows the brand name', () => {
-    const w = mount(AppNav)
+  it('shows the brand name', async () => {
+    const w = await mountNav()
     expect(w.text()).toContain('Vindobona II')
   })
 
   it('toggles the mobile menu panel open and closed via the hamburger button', async () => {
-    const w = mount(AppNav)
+    const w = await mountNav()
     const toggle = w.find('.menu-toggle')
     const panel = w.find('#nav-panel')
 
@@ -48,7 +111,7 @@ describe('AppNav', () => {
   })
 
   it('closes the mobile menu after a section link is clicked', async () => {
-    const w = mount(AppNav)
+    const w = await mountNav()
     await w.find('.menu-toggle').trigger('click')
     expect(w.find('#nav-panel').classes()).toContain('is-open')
 

@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useSiteContent } from '@/composables/useSiteContent'
 
 const year = new Date().getFullYear()
 
-// Facebook page is currently unreachable - hidden (not removed) until the
-// association clarifies what's going on with their account. Flip this back
-// to true to bring the link back; nothing else needs to change.
-const FACEBOOK_LINK_ENABLED = false
+// Social links (which platforms, enabled/disabled, URL/label) are
+// admin-editable (www-Administration -> Social Media Verweise) - the
+// backend already filters to only the enabled ones, sorted.
+const { content, load } = useSiteContent()
+onMounted(load)
 
 // The legacy WordPress footer's "Impressum" link was already a dead `href="#"`
 // with no recoverable modal content (confirmed against the live production
@@ -28,11 +30,12 @@ const closeImpressum = () => {
     <p>&copy; Copyright {{ year }} K.Ö.St.V. Vindobona II Wien | Alle Rechte vorbehalten</p>
     <div class="footer-links">
       <a
-        v-if="FACEBOOK_LINK_ENABLED"
-        href="https://www.facebook.com/vindobona2"
+        v-for="link in content?.social_links ?? []"
+        :key="link.id"
+        :href="link.url"
         target="_blank"
         rel="noopener"
-        >Facebook</a
+        >{{ link.label }}</a
       >
       <button type="button" class="impressum-trigger" @click="openImpressum">Impressum</button>
     </div>
@@ -96,7 +99,13 @@ const closeImpressum = () => {
 }
 
 .impressum-dialog {
-  position: relative;
+  /* No position override here (unlike an earlier version of this rule) —
+     the native `dialog:modal { position: fixed; inset: 0; margin: auto; }`
+     UA rule is what centers the dialog in the viewport. Overriding it to
+     `relative` broke that centering and made the browser jump the page to
+     this dialog's in-flow position (the very bottom of the page, inside
+     the footer) when it opened. GallerySection.vue's `.lightbox` dialog
+     never had this override and never had the bug — same fix pattern. */
   max-width: min(90vw, 560px);
   max-height: 85vh;
   overflow-y: auto;

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useSiteContent } from '@/composables/useSiteContent'
 
 // Order matches the original page's section order (About -> Eindrücke ->
-// Programm -> Mitglied werden -> Kontakt), plus the two external links the
-// legacy nav also carried (Intern-Login, Facebook, Instagram).
+// Programm -> Mitglied werden -> Kontakt), plus the external links the
+// legacy nav also carried (Intern-Login, social media).
 const sectionLinks = [
   { href: '#about', label: 'Über uns' },
   { href: '#eindruecke', label: 'Eindrücke' },
@@ -12,16 +13,14 @@ const sectionLinks = [
   { href: '#kontakt', label: 'Kontakt' },
 ]
 
-// Facebook page is currently unreachable - hidden (not removed) until the
-// association clarifies what's going on with their account. Flip this back
-// to true to bring the link back; nothing else needs to change.
-const FACEBOOK_LINK_ENABLED = false
+// Intern-Login is a fixed link, not a social media one - stays hardcoded.
+// The social links themselves (which platforms, enabled/disabled,
+// URL/label) are admin-editable (www-Administration -> Social Media
+// Verweise) - the backend already filters to only the enabled ones, sorted.
+const INTERN_LINK = { href: 'https://intern.vindobona2.at/', label: 'Intern' }
 
-const externalLinks = [
-  { href: 'https://intern.vindobona2.at/', label: 'Intern' },
-  { href: 'https://www.facebook.com/vindobona2', label: 'Facebook' },
-  { href: 'http://www.instagram.com/vindobona2', label: 'Instagram' },
-].filter((link) => FACEBOOK_LINK_ENABLED || link.label !== 'Facebook')
+const { content, load } = useSiteContent()
+onMounted(load)
 
 // Links stay in the DOM at all times (never v-if'd away) — only their
 // visibility on narrow screens is CSS-driven. That way the mobile menu is
@@ -54,10 +53,13 @@ const closeMenu = () => {
       <a v-for="link in sectionLinks" :key="link.href" :href="link.href" @click="closeMenu">{{
         link.label
       }}</a>
+      <a :href="INTERN_LINK.href" target="_blank" rel="noopener" @click="closeMenu">{{
+        INTERN_LINK.label
+      }}</a>
       <a
-        v-for="link in externalLinks"
-        :key="link.href"
-        :href="link.href"
+        v-for="link in content?.social_links ?? []"
+        :key="link.id"
+        :href="link.url"
         target="_blank"
         rel="noopener"
         @click="closeMenu"
