@@ -12,7 +12,7 @@ export default mergeConfig(
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html', 'lcov'],
-        include: ['src/components/**', 'src/composables/**', 'src/services/**'],
+        include: ['src/components/**', 'src/composables/**', 'src/services/**', 'src/utils/**'],
         thresholds: {
           statements: 70,
           branches: 65,

@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
+import { useSiteContent } from '@/composables/useSiteContent'
+import LinkedParagraphs from '@/components/LinkedParagraphs.vue'
 
-// Only tab titles live in data now — the tab bodies below contain real
-// markup (a hyperlink in tab 0), which a plain `{{ tabs[activeTab].text }}`
-// interpolation can't render without `v-html` (forbidden by this repo's
-// ESLint config for XSS-hardening reasons).
-const tabs = ['Der Anfang', 'MKV', 'Heute']
+const { content, loading, error, load } = useSiteContent()
+onMounted(load)
+
+const TAB_SLOTS = ['anfang', 'mkv', 'heute'] as const
+type TabSlot = (typeof TAB_SLOTS)[number]
 
 const activeTab = ref(0)
+const activeSlot = computed<TabSlot>(() => TAB_SLOTS[activeTab.value] ?? 'anfang')
+const activeTabContent = computed(() => content.value?.about_tabs[activeSlot.value] ?? null)
+
+const videoSrc = computed(() => {
+  const youtubeId = content.value?.settings.about_video_youtube_id
+  return youtubeId
+    ? `https://www.youtube.com/embed/${youtubeId}?wmode=transparent&autoplay=0`
+    : null
+})
+
 // target is bound via the template's `ref="target"` only, which vue-tsc's
 // project-references build mode doesn't trace for noUnusedLocals purposes.
 const { target, visible } = useScrollReveal()
@@ -19,88 +31,40 @@ void target
   <section id="about" ref="target" class="about-section reveal" :class="{ 'is-visible': visible }">
     <h2>Über uns</h2>
 
-    <div class="tab-buttons" role="tablist">
-      <button
-        v-for="(title, index) in tabs"
-        :key="title"
-        type="button"
-        role="tab"
-        :aria-selected="activeTab === index"
-        :class="{ active: activeTab === index }"
-        @click="activeTab = index"
-      >
-        {{ title }}
-      </button>
-      <span class="tab-indicator" :style="{ transform: `translateX(${activeTab * 100}%)` }" />
-    </div>
+    <p v-if="loading" class="status-message">Wird geladen&hellip;</p>
+    <p v-else-if="error" class="status-message">{{ error }}</p>
 
-    <div class="tab-content" role="tabpanel">
-      <template v-if="activeTab === 0">
-        <p>
-          Als Mittelschülerverbindung ist die katholische österreichische Studentenverbindung
-          Vindobona II seit ihrer Gründung am 19.9.1928 eine Vereinigung, die sich vorwiegend an
-          Schüler der Oberstufe und junge Studenten richtet. Mitglied werden kann jeder männliche
-          Katholik, der eine Oberstufe besucht und die Matura anstrebt oder die Matura bereits
-          absolviert hat. In farbstudentischer Tradition tragen die Mitglieder der Vindobona II ein
-          rot-gold-rotes Burschenband mit grünem Vorstoß, das Fuchsenband ist gold-rot, die Deckel
-          dunkelolivgrün. Als katholische Organisation lehnen wir jede Form des bewaffneten
-          Zweikampfes ab — es ist den Mitgliedern der Vindobona II daher nicht gestattet, die Mensur
-          zu fechten. Als österreichische Verbindung steht uns jeder Nationalismus und Extremismus
-          fern. Anders als bei anderen Vereinen liegen bei Vindobona II die Vorstandsfunktionen
-          sowie die meisten Organisationstätigkeiten in den Händen der Jungen, den sogenannten
-          „Aktiven“.
-        </p>
-        <p>
-          Viele Mitglieder aus der Gründungszeit unserer Verbindung waren im Widerstand aktiv. Das
-          Projekt „Niemals Wieder“ hat es sich zur Aufgabe gemacht, katholische Farbstudenten im
-          Widerstand zu dokumentieren und zusammenzutragen. Die Stolpersteine der Widerstandskämpfer
-          unserer Verbindung sind
-          <a
-            href="https://niemalswieder.at/Stolpersteine/Steine/1368"
-            target="_blank"
-            rel="noopener"
-            >hier zu finden</a
-          >.
-        </p>
-      </template>
+    <template v-else-if="content">
+      <div class="tab-buttons" role="tablist">
+        <button
+          v-for="(slot, index) in TAB_SLOTS"
+          :key="slot"
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === index"
+          :class="{ active: activeTab === index }"
+          @click="activeTab = index"
+        >
+          {{ content.about_tabs[slot].title }}
+        </button>
+        <span class="tab-indicator" :style="{ transform: `translateX(${activeTab * 100}%)` }" />
+      </div>
 
-      <template v-else-if="activeTab === 1">
-        <p>
-          Vindobona II ist Teil des Mittelschülerkartellverbandes (MKV). Diesem gehören
-          österreichweit über 160 Verbindungen mit insgesamt knapp 20.000 Mitgliedern an, was den
-          MKV zur größten Schülerorganisation Österreichs macht. Der MKV ist wiederum Teil des
-          Europäischen Kartellverbandes (EKV), der europaweit über 120.000 Mitglieder in rund 660
-          Verbindungen in 15 Ländern umfasst. Was bei Vindobona II gepflegt wird, gründet auf vier
-          unverrückbaren Prinzipien: religio (Bekenntnis zum katholischen Glauben), patria
-          (Bekenntnis zur Heimat Österreich), scientia (lebenslanges Lernen), amicitia
-          (Lebensfreundschaft).
-        </p>
-      </template>
+      <div class="tab-content" role="tabpanel">
+        <LinkedParagraphs v-if="activeTabContent" :text="activeTabContent.body" />
+      </div>
 
-      <template v-else>
-        <p>
-          Nach dem Eintritt bei Vindobona II absolviert jedes Neumitglied eine Probezeit
-          (Fuchsenzeit), in der es die Verbindung und die Verbindung ihn kennenlernen kann.
-          Entscheidet sich das Neumitglied, dabei zu bleiben, wird es nach ein bis zwei Jahren mit
-          der feierlichen Burschung als Vollmitglied aufgenommen. In den folgenden Jahren übernimmt
-          das Mitglied als „Aktiver“ Vorstandspositionen und Funktionen in der Verbindung. Nach
-          einigen Jahren — häufig nach absolviertem Studium — wird das Mitglied „philistriert“,
-          bleibt der Verbindung jedoch sein Leben lang angehörig und verbunden. Hier treffen Schüler
-          auf Richter, Studenten auf Politiker und Praktikanten auf Vorstandsvorsitzende — alle
-          pflegen untereinander das „Du“.
-        </p>
-      </template>
-    </div>
-
-    <div class="mkv-video">
-      <p class="mkv-video-label">Erfahre mehr über den MKV</p>
-      <iframe
-        src="https://www.youtube.com/embed/Sh51ebB2G8A?wmode=transparent&autoplay=0"
-        title="#MKVbringts – Mittelschüler-Kartell-Verband (MKV)"
-        loading="lazy"
-        allowfullscreen
-      />
-    </div>
+      <div class="mkv-video">
+        <p class="mkv-video-label">{{ content.settings.about_video_heading }}</p>
+        <iframe
+          v-if="videoSrc"
+          :src="videoSrc"
+          title="#MKVbringts – Mittelschüler-Kartell-Verband (MKV)"
+          loading="lazy"
+          allowfullscreen
+        />
+      </div>
+    </template>
   </section>
 </template>
 
@@ -109,6 +73,10 @@ void target
   max-width: 800px;
   margin: 0 auto;
   padding: 3rem 1.5rem;
+}
+
+.status-message {
+  color: var(--color-text-muted);
 }
 
 /* CSS Grid, not flex-wrap: three equal-width columns always, even on very
@@ -161,14 +129,6 @@ void target
 
 .tab-content {
   line-height: 1.7;
-}
-
-.tab-content p {
-  margin: 0 0 1rem;
-}
-
-.tab-content a {
-  font-weight: 700;
 }
 
 .mkv-video {

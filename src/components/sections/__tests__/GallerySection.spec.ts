@@ -1,19 +1,65 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import GallerySection from '../GallerySection.vue'
+import type { SiteContent } from '@/services/api'
 
 const mockFetchGalleryImages = vi.fn()
+const mockFetchSiteContent = vi.fn()
 vi.mock('@/services/api', () => ({
   fetchGalleryImages: (...args: unknown[]) => mockFetchGalleryImages(...args),
+  fetchSiteContent: (...args: unknown[]) => mockFetchSiteContent(...args),
 }))
+
+const SITE_CONTENT: SiteContent = {
+  about_tabs: {
+    anfang: { title: 'Der Anfang', body: 'Text.' },
+    mkv: { title: 'MKV', body: 'Text.' },
+    heute: { title: 'Heute', body: 'Text.' },
+  },
+  settings: {
+    about_video_heading: 'Erfahre mehr',
+    about_video_youtube_id: 'abcdefghijk',
+    programm_calendar_id: 'abc@group.calendar.google.com',
+    gallery_heading: 'Bildergalerie',
+  },
+  programm_hints: [],
+  quotes: [],
+  social_links: [],
+}
 
 describe('GallerySection', () => {
   beforeEach(() => {
     mockFetchGalleryImages.mockReset()
+    mockFetchSiteContent.mockReset().mockResolvedValue(SITE_CONTENT)
+    // useSiteContent.ts is a module-scoped singleton - each test needs a
+    // fresh module instance, so both it and the component (which imports
+    // it at module load time) must be re-imported after resetModules().
+    vi.resetModules()
   })
 
-  it('shows a loading message while fetching', () => {
+  async function mountSection(options?: Parameters<typeof mount>[1]) {
+    const { default: GallerySection } = await import('../GallerySection.vue')
+    const w = mount(GallerySection, options)
+    await flushPromises()
+    return w
+  }
+
+  it('shows the admin-configured section heading once loaded', async () => {
+    mockFetchGalleryImages.mockResolvedValue([])
+    const w = await mountSection()
+    expect(w.find('h2').text()).toBe('Bildergalerie')
+  })
+
+  it('falls back to "Eindrücke" while the heading is still loading', async () => {
+    mockFetchSiteContent.mockReturnValue(new Promise(() => {}))
     mockFetchGalleryImages.mockReturnValue(new Promise(() => {}))
+    const { default: GallerySection } = await import('../GallerySection.vue')
+    const w = mount(GallerySection)
+    expect(w.find('h2').text()).toBe('Eindrücke')
+  })
+
+  it('shows a loading message while fetching images', async () => {
+    mockFetchGalleryImages.mockReturnValue(new Promise(() => {}))
+    const { default: GallerySection } = await import('../GallerySection.vue')
     const w = mount(GallerySection)
     expect(w.text()).toContain('Galerie wird geladen')
   })
@@ -23,8 +69,7 @@ describe('GallerySection', () => {
       { id: '1', url: 'https://x/1.jpg', caption: 'DSC_0227', width: 800, height: 600 },
       { id: '2', url: 'https://x/2.jpg', caption: null, width: 400, height: 300 },
     ])
-    const w = mount(GallerySection)
-    await flushPromises()
+    const w = await mountSection()
 
     expect(w.findAll('img')).toHaveLength(2)
     expect(w.find('figcaption').exists()).toBe(false)
@@ -36,24 +81,21 @@ describe('GallerySection', () => {
     mockFetchGalleryImages.mockResolvedValue([
       { id: '1', url: 'https://x/1.jpg', caption: 'Ostermesse', width: 800, height: 600 },
     ])
-    const w = mount(GallerySection)
-    await flushPromises()
+    const w = await mountSection()
 
     expect(w.find('img').attributes('alt')).toBe('Ostermesse')
   })
 
   it('shows an empty-state message when there are no images', async () => {
     mockFetchGalleryImages.mockResolvedValue([])
-    const w = mount(GallerySection)
-    await flushPromises()
+    const w = await mountSection()
 
     expect(w.text()).toContain('Noch keine Bilder vorhanden.')
   })
 
-  it('shows an error message when loading fails', async () => {
+  it('shows an error message when loading images fails', async () => {
     mockFetchGalleryImages.mockRejectedValue(new Error('Netzwerkfehler'))
-    const w = mount(GallerySection)
-    await flushPromises()
+    const w = await mountSection()
 
     expect(w.text()).toContain('Netzwerkfehler')
   })
@@ -62,8 +104,7 @@ describe('GallerySection', () => {
     mockFetchGalleryImages.mockResolvedValue([
       { id: '1', url: 'https://x/1.jpg', caption: 'Ostermesse', width: 800, height: 600 },
     ])
-    const w = mount(GallerySection, { attachTo: document.body })
-    await flushPromises()
+    const w = await mountSection({ attachTo: document.body })
 
     expect(w.find('dialog').exists()).toBe(false)
 
@@ -84,8 +125,7 @@ describe('GallerySection', () => {
     mockFetchGalleryImages.mockResolvedValue([
       { id: '1', url: 'https://x/1.jpg', caption: null, width: 800, height: 600 },
     ])
-    const w = mount(GallerySection, { attachTo: document.body })
-    await flushPromises()
+    const w = await mountSection({ attachTo: document.body })
     await w.find('.gallery-item-trigger').trigger('click')
     await flushPromises()
     expect(w.find('dialog').exists()).toBe(true)
@@ -105,8 +145,7 @@ describe('GallerySection', () => {
     mockFetchGalleryImages.mockResolvedValue([
       { id: '1', url: 'https://x/1.jpg', caption: null, width: 800, height: 600 },
     ])
-    const w = mount(GallerySection, { attachTo: document.body })
-    await flushPromises()
+    const w = await mountSection({ attachTo: document.body })
     await w.find('.gallery-item-trigger').trigger('click')
     await flushPromises()
     expect(w.find('dialog').exists()).toBe(true)

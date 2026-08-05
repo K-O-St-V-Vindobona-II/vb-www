@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
 import { useGallery } from '@/composables/useGallery'
+import { useSiteContent } from '@/composables/useSiteContent'
 import type { GalleryImage } from '@/services/api'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 
 const { images, loading, error, load } = useGallery()
 onMounted(load)
+
+// The section heading is admin-editable (www-Administration -> Galerie),
+// stored alongside the other site-wide settings - a separate composable
+// from useGallery() since it's shared/cached content, not per-image data
+// with its own S3 cost profile.
+const { content: siteContent, load: loadSiteContent } = useSiteContent()
+onMounted(loadSiteContent)
 
 // target is bound via the template's `ref="target"` only, which vue-tsc's
 // project-references build mode doesn't trace for noUnusedLocals purposes.
@@ -45,7 +53,7 @@ const onDialogClose = () => {
     class="gallery-section reveal"
     :class="{ 'is-visible': visible }"
   >
-    <h2>Eindrücke</h2>
+    <h2>{{ siteContent?.settings.gallery_heading ?? 'Eindrücke' }}</h2>
 
     <p v-if="loading" class="status-message">Galerie wird geladen&hellip;</p>
     <p v-else-if="error" class="status-message">{{ error }}</p>
