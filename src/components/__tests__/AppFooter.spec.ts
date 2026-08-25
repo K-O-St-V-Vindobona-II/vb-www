@@ -73,8 +73,8 @@ describe('AppFooter', () => {
 
   it('opens a real Impressum dialog instead of a dead anchor', async () => {
     const w = await mountFooter()
-    // Regression guard: the legacy site's "Impressum" was a dead `href="#"`
-    // link — make sure this never quietly regresses back to that.
+    // Regression guard: make sure the Impressum link never becomes a dead
+    // anchor again.
     expect(w.findAll('a').some((a) => a.text() === 'Impressum')).toBe(false)
 
     const trigger = w.find('.impressum-trigger')
