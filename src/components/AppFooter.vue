@@ -10,10 +10,7 @@ const year = new Date().getFullYear()
 const { content, load } = useSiteContent()
 onMounted(load)
 
-// The legacy WordPress footer's "Impressum" link was already a dead `href="#"`
-// with no recoverable modal content (confirmed against the live production
-// HTML) — this dialog replaces it with real, confirmed content instead of
-// another dead anchor.
+// Renders a real, confirmed Impressum dialog instead of a dead anchor link.
 const impressumRef = ref<HTMLDialogElement | null>(null)
 
 const openImpressum = () => {

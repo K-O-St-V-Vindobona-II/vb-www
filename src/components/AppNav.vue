@@ -2,9 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useSiteContent } from '@/composables/useSiteContent'
 
-// Order matches the original page's section order (About -> Eindrücke ->
-// Programm -> Mitglied werden -> Kontakt), plus the external links the
-// legacy nav also carried (Intern-Login, social media).
+// Section order: About -> Eindrücke -> Programm -> Mitglied werden ->
+// Kontakt, plus the Intern-Login and social media links.
 const sectionLinks = [
   { href: '#about', label: 'Über uns' },
   { href: '#eindruecke', label: 'Eindrücke' },

@@ -1,8 +1,8 @@
 # vb-www
 
-Öffentlicher, unauthentifizierter Web-Auftritt von `www.vindobona2.at` — löst die
-bisherige WordPress-Installation ab. Vue 3 (`<script setup>`, TypeScript, Vite),
-kein Login, keine Client-seitige Routing-Bibliothek (Long-Page mit Anchor-Nav).
+Öffentlicher, unauthentifizierter Web-Auftritt von `www.vindobona2.at`. Vue 3
+(`<script setup>`, TypeScript, Vite), kein Login, keine Client-seitige
+Routing-Bibliothek (Long-Page mit Anchor-Nav).
 
 ## Architektur
 
@@ -16,6 +16,7 @@ kein Login, keine Client-seitige Routing-Bibliothek (Long-Page mit Anchor-Nav).
 
 > Alle zugehörigen Repos liegen in der GitHub-Organisation
 > [K-O-St-V-Vindobona-II](https://github.com/K-O-St-V-Vindobona-II).
+
 - Das Kontaktformular postet an `POST /api/public/contact` (Honeypot-Feld statt
   reCAPTCHA — kein externer Dienst nötig).
 - Fonts (Catamaran, PT Sans) sind selbst gehostet (`src/assets/fonts/`), nicht
