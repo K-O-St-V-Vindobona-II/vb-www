@@ -7,11 +7,12 @@ RUN npm ci
 
 COPY . .
 
-# VITE_API_BASE_URL is baked in at build time (unlike vb-intern's runtime-config
-# approach) - this is a public marketing site with no per-deployment secrets,
-# and api.vindobona2.at is a fixed, known origin per stage.
-ARG VITE_API_BASE_URL
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+# Satisfies vite.env-check.ts's validateViteEnv() during `npm run build`
+# below — this is a Docker-build-time-only gate. With VITE_APP_ENVIRONMENT
+# set to "production", VITE_API_BASE_URL is not required: the real API URL
+# is resolved at runtime instead (see the entrypoint script copied below).
+ARG VITE_APP_ENVIRONMENT=production
+ENV VITE_APP_ENVIRONMENT=$VITE_APP_ENVIRONMENT
 
 RUN npm run build
 
@@ -20,6 +21,12 @@ FROM docker.io/library/nginx:1-alpine
 
 COPY --from=builder /build/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# nginx's own /docker-entrypoint.sh (the base image's ENTRYPOINT) runs every
+# executable *.sh file under /docker-entrypoint.d/ before starting nginx.
+# This hook renders dist/config.template.js (copied above) into config.js
+# from the real container environment on every container start.
+COPY --chmod=755 docker/docker-entrypoint.d/40-generate-runtime-config.sh /docker-entrypoint.d/40-generate-runtime-config.sh
 
 EXPOSE 80
 

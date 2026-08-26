@@ -1,5 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { fetchGalleryImages, submitContactForm } from '@/services/api'
+
+const TEST_API_BASE_URL = 'https://api.test.example/api'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
@@ -7,6 +9,16 @@ vi.stubGlobal('fetch', mockFetch)
 describe('api', () => {
   beforeEach(() => {
     mockFetch.mockReset()
+    // Stubbed explicitly instead of relying on whatever VITE_API_BASE_URL
+    // happens to be set in the running environment (e.g. a dev container's
+    // .env vs. a CI runner with none at all) - see runtimeConfig.ts's
+    // fallback chain, which would otherwise silently resolve to a different
+    // value (its hardcoded literal default) depending on where the test runs.
+    vi.stubEnv('VITE_API_BASE_URL', TEST_API_BASE_URL)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   describe('fetchGalleryImages', () => {
@@ -18,7 +30,7 @@ describe('api', () => {
 
       const images = await fetchGalleryImages()
 
-      expect(mockFetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_BASE_URL}/public/gallery`)
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_BASE_URL}/public/gallery`)
       expect(images).toHaveLength(1)
     })
 
@@ -58,14 +70,11 @@ describe('api', () => {
 
       await submitContactForm({ name: 'Max', email: 'max@example.com', message: 'Hallo!' })
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        `${import.meta.env.VITE_API_BASE_URL}/public/contact`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: 'Max', email: 'max@example.com', message: 'Hallo!' }),
-        },
-      )
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_BASE_URL}/public/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Max', email: 'max@example.com', message: 'Hallo!' }),
+      })
     })
 
     it('throws the backend detail message on failure', async () => {
