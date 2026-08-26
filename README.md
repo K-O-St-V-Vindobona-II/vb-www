@@ -65,8 +65,25 @@ npm run lint
 npm run lint:fix
 ```
 
+## Umgebungsvariablen
+
+`VITE_API_BASE_URL` (siehe `.env.example`) ist die einzige relevante Variable —
+Basis-URL des Backends, das für die Galerie (`GET /api/public/gallery`) und
+das Kontaktformular (`POST /api/public/contact`) angesprochen wird. Wird zur
+Build-Zeit in das Bundle eingebrannt (siehe Deployment unten), nicht als
+Runtime-Konfiguration gelesen — anders als bei `vb-intern`.
+
 ## Deployment
 
 `Dockerfile` baut ein statisches Nginx-Image (`VITE_API_BASE_URL` als Build-Arg,
 siehe Kommentar im Dockerfile — bewusst Build-Zeit statt Runtime-Config wie bei
 `vb-intern`, da hier keine deploymentspezifischen Secrets im Bundle landen).
+
+Die CI/CD-Pipeline (`.github/workflows/ci-cd.yml`) baut dieses Image bei jedem
+Merge nach `main` automatisch und pusht es nach `ghcr.io`. Das Rollout selbst
+läuft außerhalb dieser Pipeline: `podman-auto-update.timer` auf dem Zielsystem
+holt das neue `:latest`-Image automatisch, oder ein sofortiger Deploy wird
+manuell per `--tags deploy-www` ausgelöst — siehe
+[`vb-deploy`s Phase 2 — Tag-2-Betrieb](../vb-deploy/README.md#phase-2--tag-2-betrieb).
+Siehe [Stages](../vb-deploy/README.md#stages) für den aktuellen Caveat zu
+Non-Prod-Stages (fest eingebrannte Produktions-API-URL).
