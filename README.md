@@ -1,5 +1,102 @@
 # vb-www
 
+Public, unauthenticated web presence of `www.vindobona2.at`. Vue 3
+(`<script setup>`, TypeScript, Vite), no login, no client-side routing
+library (long page with anchor navigation).
+
+## Architecture
+
+- Static structure, text/CTA content hardcoded in the section components
+  (`src/components/sections/`) — mirroring the old page, unchanged for years.
+- The image gallery (`GallerySection.vue`) is loaded from `vb-api` at
+  runtime (`GET /api/public/gallery`, unauthenticated). It's managed via a
+  mini-CMS area in `vb-intern` ("www administration" → "Gallery").
+- The event calendar is a simple Google Calendar iframe embed (no custom
+  styling, no backend proxy needed).
+
+> All related repos live in the [K-O-St-V-Vindobona-II](https://github.com/K-O-St-V-Vindobona-II) GitHub organization.
+
+- The contact form posts to `POST /api/public/contact` (a honeypot field
+  instead of reCAPTCHA — no external service needed).
+- Fonts (Catamaran, PT Sans) are self-hosted (`src/assets/fonts/`), not
+  loaded from the Google Fonts CDN (avoids the GDPR discussion around
+  fonts.gstatic.com).
+
+## Project Setup
+
+```sh
+npm install
+```
+
+### After cloning
+
+```sh
+# Install git hooks — required once per clone, prevents CI failures from formatting mismatches
+pre-commit install
+```
+
+### Development (hot reload)
+
+```sh
+npm run dev
+```
+
+Needs `VITE_APP_ENVIRONMENT` and `VITE_API_BASE_URL` (see `.env.example`) —
+the latter points at the running `vb-api` instance.
+
+### Type-check, build for production
+
+```sh
+npm run build
+```
+
+### Tests
+
+```sh
+npm run test:unit        # watch mode
+npm run test:coverage    # single run with coverage report
+```
+
+### Linting
+
+```sh
+npm run lint
+npm run lint:fix
+```
+
+## Environment Variables
+
+- `VITE_APP_ENVIRONMENT` (see `.env.example`) — which stage this instance
+  represents, only controls the build-time guard in `vite.env-check.ts`.
+- `VITE_API_BASE_URL` (see `.env.example`) — base URL of the backend used
+  for the gallery (`GET /api/public/gallery`), the site content
+  (`GET /api/public/site-content`), and the contact form
+  (`POST /api/public/contact`). Only applies to `npm run dev` or a local
+  build; the production image no longer uses it (see Deployment below).
+
+## Deployment
+
+`Dockerfile` builds a static nginx image. The backend URL — just like in
+`vb-intern` — is read as runtime configuration rather than baked into the
+bundle at build time: an nginx entrypoint script
+(`docker/docker-entrypoint.d/40-generate-runtime-config.sh`) generates
+`config.js` (`window.__APP_CONFIG__`) on every container start from the
+unprefixed container environment variable `API_BASE_URL` (see
+`src/runtimeConfig.ts`). The same `:latest` image thus runs unchanged on
+every stage — the respective API URL comes exclusively from the container
+environment, no stage-specific rebuild needed.
+
+The CI/CD pipeline (`.github/workflows/ci-cd.yml`) builds this image
+automatically on every merge to `main` and pushes it to `ghcr.io`. The
+rollout itself happens outside this pipeline: the target system's own
+`podman-auto-update.timer` picks up the new `:latest` image automatically,
+or an immediate deploy is triggered manually via `--tags deploy-www` — see
+[`vb-deploy`'s Phase 2 — Day-2 Operations](../vb-deploy/README.md#phase-2--day-2-operations).
+
+---
+
+# Deutsch
+
 Öffentlicher, unauthentifizierter Web-Auftritt von `www.vindobona2.at`. Vue 3
 (`<script setup>`, TypeScript, Vite), kein Login, keine Client-seitige
 Routing-Bibliothek (Long-Page mit Anchor-Nav).
