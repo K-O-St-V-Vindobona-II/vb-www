@@ -73,8 +73,6 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          build-args: |
-            VITE_API_BASE_URL=https://api.vindobona2.at/api
           tags: |
             ghcr.io/k-o-st-v-vindobona-ii/vb-www:latest
             ghcr.io/k-o-st-v-vindobona-ii/vb-www:sha-${{ github.sha }}

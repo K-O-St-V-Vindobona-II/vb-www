@@ -1,3 +1,5 @@
+import { apiBaseUrl } from '@/runtimeConfig'
+
 export interface GalleryImage {
   id: string
   url: string
@@ -58,8 +60,6 @@ export interface SiteContent {
   social_links: SiteContentSocialLink[]
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
 async function parseErrorDetail(response: Response, fallback: string): Promise<string> {
   try {
     const data = (await response.json()) as { detail?: unknown }
@@ -71,7 +71,7 @@ async function parseErrorDetail(response: Response, fallback: string): Promise<s
 }
 
 export async function fetchGalleryImages(): Promise<GalleryImage[]> {
-  const response = await fetch(`${API_BASE_URL}/public/gallery`)
+  const response = await fetch(`${apiBaseUrl()}/public/gallery`)
   if (!response.ok) {
     throw new Error(await parseErrorDetail(response, 'Galerie konnte nicht geladen werden.'))
   }
@@ -79,7 +79,7 @@ export async function fetchGalleryImages(): Promise<GalleryImage[]> {
 }
 
 export async function fetchSiteContent(): Promise<SiteContent> {
-  const response = await fetch(`${API_BASE_URL}/public/site-content`)
+  const response = await fetch(`${apiBaseUrl()}/public/site-content`)
   if (!response.ok) {
     throw new Error(await parseErrorDetail(response, 'Inhalte konnten nicht geladen werden.'))
   }
@@ -87,7 +87,7 @@ export async function fetchSiteContent(): Promise<SiteContent> {
 }
 
 export async function submitContactForm(payload: ContactFormPayload): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/public/contact`, {
+  const response = await fetch(`${apiBaseUrl()}/public/contact`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
