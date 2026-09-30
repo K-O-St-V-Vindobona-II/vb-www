@@ -122,8 +122,16 @@ const closeMenu = () => {
 
 /* Mobile: links live in a collapsible panel below the bar, hidden by
    default and slid open by toggling `.is-open` (height-animated so it
-   works without a fixed pixel height and respects reduced-motion). */
+   works without a fixed pixel height and respects reduced-motion).
+   The panel is laid over the page (absolute), not pushed into the flow: the
+   bar keeps its height when the menu opens and closes, so an anchor jump from
+   an open menu is not shifted by the panel collapsing behind it. The bar
+   itself is translucent, so the panel needs an opaque background of its own. */
 .links {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -131,6 +139,7 @@ const closeMenu = () => {
   max-height: 0;
   overflow: hidden;
   padding: 0 1rem;
+  background: rgb(var(--color-primary-rgb));
   transition:
     max-height 0.3s ease,
     padding 0.3s ease;
@@ -184,10 +193,12 @@ const closeMenu = () => {
   }
 
   .links {
+    position: static;
     flex-direction: row;
     max-height: none;
     overflow: visible;
     padding: 0 2rem 0.75rem;
+    background: none;
   }
 }
 </style>

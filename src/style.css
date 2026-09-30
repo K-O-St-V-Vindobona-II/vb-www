@@ -95,9 +95,17 @@
 
 html {
   scroll-behavior: smooth;
-  /* Keeps anchor targets from hiding behind the sticky nav on jump. */
-  scroll-padding-top: 4rem;
+  /* Keeps anchor targets from hiding behind the sticky nav on jump: the height
+     of the bar (about 3.9rem on a phone, about 6.1rem with the link row on a
+     wide screen) plus a little air. */
+  scroll-padding-top: 4.5rem;
   color-scheme: light dark;
+}
+
+@media (min-width: 700px) {
+  html {
+    scroll-padding-top: 6.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
