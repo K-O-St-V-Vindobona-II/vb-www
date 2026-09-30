@@ -59,6 +59,12 @@ describe('ProgrammSection', () => {
     )
   })
 
+  it('sends an explicit referrer policy with the calendar frame', async () => {
+    mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
+    const w = await mountSection()
+    expect(w.find('iframe').attributes('referrerpolicy')).toBe('strict-origin-when-cross-origin')
+  })
+
   it('shows the Hinweise text from the API', async () => {
     mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
     const w = await mountSection()

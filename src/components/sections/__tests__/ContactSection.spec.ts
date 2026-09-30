@@ -104,6 +104,15 @@ describe('ContactSection', () => {
     expect(w.text()).toContain('Bitte bei „Vindobona“ anläuten!')
   })
 
+  it('embeds the map from OpenStreetMap with an explicit referrer policy', () => {
+    const w = mount(ContactSection)
+    const frame = w.find('iframe[title="Standort"]')
+    expect(frame.attributes('src')).toMatch(
+      /^https:\/\/www\.openstreetmap\.org\/export\/embed\.html\?/,
+    )
+    expect(frame.attributes('referrerpolicy')).toBe('strict-origin-when-cross-origin')
+  })
+
   it('disables the submit button while submitting', async () => {
     let resolveSubmit: () => void = () => {}
     mockSubmitContactForm.mockReturnValue(

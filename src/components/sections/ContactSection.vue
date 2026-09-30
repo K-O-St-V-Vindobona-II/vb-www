@@ -111,6 +111,7 @@ void target
           title="Standort"
           class="map-embed"
           loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
           src="https://www.openstreetmap.org/export/embed.html?bbox=16.355957686901096%2C48.2148704647898%2C16.359498202800754%2C48.216428932128366&layer=mapnik&marker=48.215649704388795%2C16.35772794485092"
         />
       </div>
