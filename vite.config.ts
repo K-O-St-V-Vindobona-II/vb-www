@@ -24,6 +24,9 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['www.vindobona2.at.dev.schimpl.cc'],
+    // Coverage reports are rewritten on every test run; watching them would
+    // trigger a full page reload per generated HTML file in the dev browser.
+    watch: { ignored: ['**/coverage/**'] },
   },
   build: {
     sourcemap: false,

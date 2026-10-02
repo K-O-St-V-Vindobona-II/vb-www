@@ -45,6 +45,7 @@ void target
         title="Veranstaltungskalender"
         class="calendar-embed"
         loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
       />
 
       <a v-if="icalHref" class="ical-link" :href="icalHref">

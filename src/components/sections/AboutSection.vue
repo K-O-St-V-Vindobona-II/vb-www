@@ -17,7 +17,7 @@ const activeTabContent = computed(() => content.value?.about_tabs[activeSlot.val
 const videoSrc = computed(() => {
   const youtubeId = content.value?.settings.about_video_youtube_id
   return youtubeId
-    ? `https://www.youtube.com/embed/${youtubeId}?wmode=transparent&autoplay=0`
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}`
     : null
 })
 
@@ -61,6 +61,7 @@ void target
           :src="videoSrc"
           title="#MKVbringts – Mittelschüler-Kartell-Verband (MKV)"
           loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
           allowfullscreen
         />
       </div>

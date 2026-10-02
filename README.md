@@ -18,9 +18,8 @@ library (long page with anchor navigation).
 
 - The contact form posts to `POST /api/public/contact` (a honeypot field
   instead of reCAPTCHA — no external service needed).
-- Fonts (Catamaran, PT Sans) are self-hosted (`src/assets/fonts/`), not
-  loaded from the Google Fonts CDN (avoids the GDPR discussion around
-  fonts.gstatic.com).
+- The site uses the visitor's system fonts (`--font-body` in `src/style.css`):
+  no font files to host or license, and no request to a font service.
 
 ## Project Setup
 
@@ -116,9 +115,9 @@ Routing-Bibliothek (Long-Page mit Anchor-Nav).
 
 - Das Kontaktformular postet an `POST /api/public/contact` (Honeypot-Feld statt
   reCAPTCHA — kein externer Dienst nötig).
-- Fonts (Catamaran, PT Sans) sind selbst gehostet (`src/assets/fonts/`), nicht
-  von Google Fonts CDN geladen (vermeidet die DSGVO-Diskussion um
-  fonts.gstatic.com).
+- Die Seite verwendet die Systemschriften der Besucher (`--font-body` in
+  `src/style.css`): keine Font-Dateien zu hosten oder zu lizenzieren und keine
+  Anfrage an einen Schriftendienst.
 
 ## Projekt-Setup
 

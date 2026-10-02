@@ -97,11 +97,37 @@ describe('AboutSection', () => {
     expect(w.text()).toContain('Erfahre mehr über den MKV')
 
     const iframe = w.find('iframe')
-    expect(iframe.attributes('src')).toContain('youtube.com/embed/Sh51ebB2G8A')
+    expect(iframe.attributes('src')).toBe('https://www.youtube-nocookie.com/embed/Sh51ebB2G8A')
 
     const buttons = w.findAll('button[role="tab"]')
     await buttons[1]?.trigger('click')
     expect(w.find('iframe').exists()).toBe(true)
+  })
+
+  it('sends an explicit referrer policy with the video frame', async () => {
+    mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
+    const w = await mountSection()
+    expect(w.find('iframe').attributes('referrerpolicy')).toBe('strict-origin-when-cross-origin')
+  })
+
+  it('escapes the video id in the address of the frame', async () => {
+    mockFetchSiteContent.mockResolvedValue({
+      ...SITE_CONTENT,
+      settings: { ...SITE_CONTENT.settings, about_video_youtube_id: 'a/../b?x=1' },
+    })
+    const w = await mountSection()
+    expect(w.find('iframe').attributes('src')).toBe(
+      'https://www.youtube-nocookie.com/embed/a%2F..%2Fb%3Fx%3D1',
+    )
+  })
+
+  it('renders no video frame when no video id is configured', async () => {
+    mockFetchSiteContent.mockResolvedValue({
+      ...SITE_CONTENT,
+      settings: { ...SITE_CONTENT.settings, about_video_youtube_id: '' },
+    })
+    const w = await mountSection()
+    expect(w.find('iframe').exists()).toBe(false)
   })
 
   it('links to the Stolpersteine page as a real <a>, not raw markup', async () => {

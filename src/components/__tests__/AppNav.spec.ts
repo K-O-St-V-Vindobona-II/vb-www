@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import type { SiteContent } from '@/services/api'
+import navSource from '../AppNav.vue?raw'
 
 const mockFetchSiteContent = vi.fn()
 vi.mock('@/services/api', () => ({
@@ -118,5 +119,31 @@ describe('AppNav', () => {
     await w.find('a[href="#about"]').trigger('click')
 
     expect(w.find('#nav-panel').classes()).not.toContain('is-open')
+  })
+
+  // The stylesheet cannot run in jsdom, so its rules are read as text; the anchor jumps
+  // themselves were measured in a browser.
+  describe('the mobile menu panel layout', () => {
+    const css = navSource.slice(navSource.indexOf('<style'))
+    const rule = (selector: string, source = css) => {
+      const start = source.indexOf(`${selector} {`)
+      return start === -1 ? '' : source.slice(start, source.indexOf('}', start))
+    }
+    const desktop = css.slice(css.indexOf('@media (min-width: 700px)'))
+
+    it('lays the panel over the page, so opening and closing it does not move the content', () => {
+      expect(rule('.links')).toContain('position: absolute;')
+      expect(rule('.links')).toContain('top: 100%;')
+      expect(rule('.links', desktop)).toContain('position: static;')
+    })
+
+    it('gives the overlaid panel an opaque background, so the page does not show through', () => {
+      expect(rule('.links')).toContain('background: rgb(var(--color-primary-rgb));')
+      expect(rule('.links', desktop)).toContain('background: none;')
+    })
+
+    it('keeps the bar at the top of the screen while the page scrolls', () => {
+      expect(rule('.app-nav')).toContain('position: sticky;')
+    })
   })
 })
