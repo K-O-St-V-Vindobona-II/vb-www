@@ -35,18 +35,18 @@ export interface SiteContentSettings {
 }
 
 export interface SiteContentProgrammHint {
-  id: number
+  id: string
   text: string
 }
 
 export interface SiteContentQuote {
-  id: number
+  id: string
   quote: string
   author: string
 }
 
 export interface SiteContentSocialLink {
-  id: number
+  id: string
   platform: string
   label: string
   url: string
@@ -70,29 +70,39 @@ async function parseErrorDetail(response: Response, fallback: string): Promise<s
   return fallback
 }
 
-export async function fetchGalleryImages(): Promise<GalleryImage[]> {
-  const response = await fetch(`${apiBaseUrl()}/public/gallery`)
-  if (!response.ok) {
-    throw new Error(await parseErrorDetail(response, 'Galerie konnte nicht geladen werden.'))
+const REQUEST_TIMEOUT_MS = 15_000
+
+// A network failure, a timeout and an unusable answer all surface as the same German message the
+// caller passes in: the browser's own text for a failed fetch ("Failed to fetch") is English and
+// means nothing to a visitor.
+async function request(path: string, fallback: string, init: RequestInit = {}): Promise<Response> {
+  let response: Response
+  try {
+    response = await fetch(`${apiBaseUrl()}${path}`, {
+      ...init,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+  } catch (error) {
+    throw new Error(fallback, { cause: error })
   }
+  if (!response.ok) throw new Error(await parseErrorDetail(response, fallback))
+  return response
+}
+
+export async function fetchGalleryImages(): Promise<GalleryImage[]> {
+  const response = await request('/public/gallery', 'Galerie konnte nicht geladen werden.')
   return (await response.json()) as GalleryImage[]
 }
 
 export async function fetchSiteContent(): Promise<SiteContent> {
-  const response = await fetch(`${apiBaseUrl()}/public/site-content`)
-  if (!response.ok) {
-    throw new Error(await parseErrorDetail(response, 'Inhalte konnten nicht geladen werden.'))
-  }
+  const response = await request('/public/site-content', 'Inhalte konnten nicht geladen werden.')
   return (await response.json()) as SiteContent
 }
 
 export async function submitContactForm(payload: ContactFormPayload): Promise<void> {
-  const response = await fetch(`${apiBaseUrl()}/public/contact`, {
+  await request('/public/contact', 'Nachricht konnte nicht gesendet werden.', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-  if (!response.ok) {
-    throw new Error(await parseErrorDetail(response, 'Nachricht konnte nicht gesendet werden.'))
-  }
 }

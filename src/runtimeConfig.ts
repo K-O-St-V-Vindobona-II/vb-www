@@ -11,10 +11,11 @@
 //
 // DEV / VITEST: nothing generates config.js, so the <script src="/config.js">
 // tag in index.html 404s harmlessly and window.__APP_CONFIG__ stays
-// undefined. The getter below then falls through to the existing
-// import.meta.env.VITE_API_BASE_URL build-time variable, then to the same
-// literal default that existed in the code before this module was
-// introduced.
+// undefined. The getter below then falls through to the
+// import.meta.env.VITE_API_BASE_URL build-time variable. Without either
+// source it throws: a build that is not told which backend to use must not
+// quietly talk to the production API (vite.env-check.ts enforces the same
+// rule at build time).
 
 declare global {
   interface Window {
@@ -27,9 +28,9 @@ function readRuntimeConfig(key: string): string | undefined {
 }
 
 export function apiBaseUrl(): string {
-  return (
-    readRuntimeConfig('API_BASE_URL') ||
-    import.meta.env.VITE_API_BASE_URL ||
-    'https://api.vindobona2.at/api'
-  )
+  const url = readRuntimeConfig('API_BASE_URL') || import.meta.env.VITE_API_BASE_URL
+  if (!url) {
+    throw new Error('API base URL is not configured (API_BASE_URL or VITE_API_BASE_URL).')
+  }
+  return url.replace(/\/+$/, '')
 }
