@@ -28,6 +28,23 @@ require_env() {
 
 require_env API_BASE_URL
 
+# config.template.js writes the value between single quotes into JavaScript, so it has to be a
+# plain http(s) URL: a quote, backslash, angle bracket, dollar sign, backtick, whitespace or
+# line break in it would end the string or the script and break, or take over, config.js.
+case "$API_BASE_URL" in
+  http://?* | https://?*) ;;
+  *)
+    echo "FATAL: API_BASE_URL must start with http:// or https:// and name a host. Aborting." >&2
+    exit 1
+    ;;
+esac
+case "$API_BASE_URL" in
+  *[!A-Za-z0-9:/._~%@+,=?\&#-]*)
+    echo "FATAL: API_BASE_URL contains a character that is not allowed in a plain URL. Aborting." >&2
+    exit 1
+    ;;
+esac
+
 if [ ! -f "$TEMPLATE" ]; then
   echo "FATAL: $TEMPLATE not found. Aborting." >&2
   exit 1
