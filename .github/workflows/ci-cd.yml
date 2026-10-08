@@ -9,13 +9,21 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: npm
@@ -28,9 +36,10 @@ jobs:
   quality:
     name: Typecheck & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: npm
@@ -43,23 +52,25 @@ jobs:
   security:
     name: CodeQL Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: github/codeql-action/init@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
         with:
           languages: javascript-typescript
-      - uses: github/codeql-action/analyze@v4
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
 
   smoke-test-readonly:
     name: Read-Only Rootfs Smoke Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Build the image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           file: Dockerfile
@@ -114,25 +125,62 @@ jobs:
             exit 1
           fi
 
+      - name: Check what the container sends
+        run: |
+          echo "--- no capabilities, unprivileged user ---"
+          docker exec vb-www-smoke sh -c 'grep -E "^(CapEff|CapBnd):" /proc/1/status'
+          docker exec vb-www-smoke sh -c 'grep -q "^CapEff:.0000000000000000$" /proc/1/status'
+          docker exec vb-www-smoke sh -c 'test "$(id -u)" = 101'
+
+          echo "--- unknown paths are 404, the version is not announced ---"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8090/.env)" = 404
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8090/config.template.js)" = 404
+          curl -sI http://localhost:8090/ | grep -qi '^server: nginx.$'
+
+          echo "--- one Cache-Control header on a hashed asset ---"
+          asset=$(curl -s http://localhost:8090/ | grep -o '/assets/[^"]*\.js' | head -1)
+          test -n "$asset"
+          test "$(curl -sI "http://localhost:8090${asset}" | grep -ci '^cache-control:')" = 1
+
           docker rm -f vb-www-smoke
+
+      # config.js is executable JavaScript built from one environment variable: the entrypoint has
+      # to refuse a missing value, a value without http(s), and one that could end the string.
+      - name: Refuse a bad API_BASE_URL
+        run: |
+          for value in "" "api.example.test" "https://x.test/a'b" "https://x.test/a b" 'https://x.test/$(id)'; do
+            # "nginx -t" only tests the configuration, but the image's entrypoint runs its hooks
+            # first, and only for a command that starts with "nginx".
+            if docker run --rm --read-only --cap-drop=all \
+                 --tmpfs /run:mode=1777 --tmpfs /tmp:mode=1777 \
+                 -e "API_BASE_URL=${value}" vb-www:smoke-test nginx -t >/dev/null 2>&1; then
+              echo "The container started with API_BASE_URL='${value}'"
+              exit 1
+            fi
+          done
 
   release-image:
     name: Build & Push Image
     needs: [lint, quality, security, smoke-test-readonly]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only a push that landed on main, or an explicit manual dispatch also run against main, may
+    # publish :latest - a scheduled run only refreshes the CodeQL scan and must never release, and
+    # a run on any other branch must not either, since the production Quadlet pulls :latest
+    # automatically.
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v7
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           file: Dockerfile
