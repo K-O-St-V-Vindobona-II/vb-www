@@ -88,16 +88,53 @@ describe('TestimonialsSection', () => {
     expect(w.findAll('blockquote')).toHaveLength(3)
   })
 
-  it('scrolls the container when an arrow is clicked', async () => {
+  it('scrolls the container back with the left arrow and forward with the right one', async () => {
+    mockFetchSiteContent.mockResolvedValue(buildContent(THREE_QUOTES))
+    const w = await mountSection()
+    const container = w.find('.testimonial-grid').element as HTMLElement
+    Object.defineProperty(container, 'clientWidth', { value: 500, configurable: true })
+    container.scrollBy = vi.fn()
+
+    await w.find('button[aria-label="Vorherige Zitate"]').trigger('click')
+    await w.find('button[aria-label="Weitere Zitate"]').trigger('click')
+
+    expect(container.scrollBy).toHaveBeenNthCalledWith(1, expect.objectContaining({ left: -450 }))
+    expect(container.scrollBy).toHaveBeenNthCalledWith(2, expect.objectContaining({ left: 450 }))
+  })
+
+  it('shows quotes and authors in the order of the API, each author under its own quote', async () => {
     mockFetchSiteContent.mockResolvedValue(buildContent(THREE_QUOTES))
     const w = await mountSection()
 
-    const container = w.find('.testimonial-grid').element as HTMLElement
-    container.scrollBy = vi.fn()
+    expect(
+      w
+        .findAll('blockquote')
+        .map((q) => [q.find('.quote-text').text(), q.find('.quote-author').text()]),
+    ).toEqual([
+      [TWO_QUOTES[0]!.quote, 'Ein Fuchs'],
+      [TWO_QUOTES[1]!.quote, 'Ein Junger Aktiver'],
+      ['Ein drittes Zitat.', 'Noch jemand'],
+    ])
+  })
 
-    await w.findAll('.scroll-arrow')[1]?.trigger('click')
+  it('shows nothing, not even an empty frame, when there are no quotes', async () => {
+    mockFetchSiteContent.mockResolvedValue(buildContent([]))
+    const w = await mountSection()
 
-    expect(container.scrollBy).toHaveBeenCalledOnce()
+    expect(w.find('.testimonials-wrapper').exists()).toBe(false)
+    expect(w.find('.status-message').exists()).toBe(false)
+  })
+
+  it('hides the decorative quote marks and the arrow glyphs from screen readers', async () => {
+    mockFetchSiteContent.mockResolvedValue(buildContent(THREE_QUOTES))
+    const w = await mountSection()
+
+    expect(
+      w.findAll('.quote-mark').every((mark) => mark.attributes('aria-hidden') === 'true'),
+    ).toBe(true)
+    expect(
+      w.findAll('.scroll-arrow span').every((glyph) => glyph.attributes('aria-hidden') === 'true'),
+    ).toBe(true)
   })
 
   it('shows a loading message while fetching', async () => {
