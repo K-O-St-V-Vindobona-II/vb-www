@@ -20,8 +20,8 @@ const SITE_CONTENT: SiteContent = {
     gallery_heading: 'Eindrücke',
   },
   programm_hints: [
-    { id: 1, text: 'Alle Veranstaltungen beginnen c.t.' },
-    { id: 2, text: 'Alle Veranstaltungen finden auf der Bude Vindobonae statt.' },
+    { id: 'item-uuid-1', text: 'Alle Veranstaltungen beginnen c.t.' },
+    { id: 'item-uuid-2', text: 'Alle Veranstaltungen finden auf der Bude Vindobonae statt.' },
   ],
   quotes: [],
   social_links: [],

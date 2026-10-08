@@ -27,7 +27,7 @@ const SITE_CONTENT: SiteContent = {
   // so it deliberately does not appear.
   social_links: [
     {
-      id: 2,
+      id: 'item-uuid-2',
       platform: 'instagram',
       label: 'Instagram',
       url: 'http://www.instagram.com/vindobona2',

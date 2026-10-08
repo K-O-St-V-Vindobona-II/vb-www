@@ -28,19 +28,22 @@ function buildContent(quotes: SiteContent['quotes']): SiteContent {
 
 const TWO_QUOTES = [
   {
-    id: 1,
+    id: 'item-uuid-1',
     quote:
       'Als ich das erste Mal bei einer Verbindung war, war ich sofort begeistert und fühlte mich in der Gemeinschaft aufgehoben.',
     author: 'Ein Fuchs',
   },
   {
-    id: 2,
+    id: 'item-uuid-2',
     quote: 'Durch die Verbindung hab ich herausgefunden, was mich interessiert.',
     author: 'Ein Junger Aktiver',
   },
 ]
 
-const THREE_QUOTES = [...TWO_QUOTES, { id: 3, quote: 'Ein drittes Zitat.', author: 'Noch jemand' }]
+const THREE_QUOTES = [
+  ...TWO_QUOTES,
+  { id: 'item-uuid-3', quote: 'Ein drittes Zitat.', author: 'Noch jemand' },
+]
 
 describe('TestimonialsSection', () => {
   beforeEach(() => {

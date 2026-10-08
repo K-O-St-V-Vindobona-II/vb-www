@@ -7,7 +7,7 @@ import globals from 'globals'
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', '*.config.*', 'public/**'],
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'public/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -24,7 +24,6 @@ export default tseslint.config(
       },
       globals: {
         ...globals.browser,
-        ...globals.node,
       },
     },
     rules: {
@@ -88,10 +87,13 @@ export default tseslint.config(
     },
   },
   {
-    // Test mocks frequently need loose object shapes.
-    files: ['**/__tests__/**/*.{ts,vue}', '**/*.spec.ts'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+    // Build-time and test code runs in Node, the browser bundle does not: keep the Node globals
+    // (process, Buffer, require) out of the code that ships.
+    files: ['*.config.*', 'vite.env-check*.ts', '**/__tests__/**/*.{ts,vue}', '**/*.spec.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
     },
   },
   prettierConfig,

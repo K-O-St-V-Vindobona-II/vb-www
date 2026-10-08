@@ -10,6 +10,8 @@ if (!process.env.VITEST) {
   try {
     validateViteEnv(process.env)
   } catch (err) {
+    // The build must stop with the reason on the terminal, there is no logger at this point.
+    // eslint-disable-next-line no-console
     console.error(err instanceof Error ? err.message : String(err))
     process.exit(1)
   }

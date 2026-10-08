@@ -25,7 +25,7 @@ const SITE_CONTENT: SiteContent = {
   // (see public_site.py::get_site_content()).
   social_links: [
     {
-      id: 2,
+      id: 'item-uuid-2',
       platform: 'instagram',
       label: 'Instagram',
       url: 'https://www.instagram.com/vindobona2',

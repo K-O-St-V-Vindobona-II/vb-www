@@ -7,6 +7,9 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'jsdom',
+      // Vitest turns stylesheets into empty text unless they are listed here;
+      // the scroll padding spec reads the raw text of the global stylesheet.
+      css: { include: [/\/style\.css/] },
       exclude: [...configDefaults.exclude, 'e2e/*'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {

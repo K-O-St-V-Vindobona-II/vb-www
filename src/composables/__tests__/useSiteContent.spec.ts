@@ -18,9 +18,11 @@ const SOME_CONTENT: SiteContent = {
     programm_calendar_id: 'abc@group.calendar.google.com',
     gallery_heading: 'Eindrücke',
   },
-  programm_hints: [{ id: 1, text: 'Hinweis' }],
-  quotes: [{ id: 1, quote: 'Zitat', author: 'Jemand' }],
-  social_links: [{ id: 1, platform: 'instagram', label: 'Instagram', url: 'https://x' }],
+  programm_hints: [{ id: 'item-uuid-1', text: 'Hinweis' }],
+  quotes: [{ id: 'item-uuid-1', quote: 'Zitat', author: 'Jemand' }],
+  social_links: [
+    { id: 'item-uuid-1', platform: 'instagram', label: 'Instagram', url: 'https://x' },
+  ],
 }
 
 describe('useSiteContent', () => {
