@@ -38,9 +38,11 @@ void target
       <div class="tab-buttons" role="tablist">
         <button
           v-for="(slot, index) in TAB_SLOTS"
+          :id="`about-tab-${slot}`"
           :key="slot"
           type="button"
           role="tab"
+          aria-controls="about-tabpanel"
           :aria-selected="activeTab === index"
           :class="{ active: activeTab === index }"
           @click="activeTab = index"
@@ -50,7 +52,12 @@ void target
         <span class="tab-indicator" :style="{ transform: `translateX(${activeTab * 100}%)` }" />
       </div>
 
-      <div class="tab-content" role="tabpanel">
+      <div
+        id="about-tabpanel"
+        class="tab-content"
+        role="tabpanel"
+        :aria-labelledby="`about-tab-${activeSlot}`"
+      >
         <LinkedParagraphs v-if="activeTabContent" :text="activeTabContent.body" />
       </div>
 

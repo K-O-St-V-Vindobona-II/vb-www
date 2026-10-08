@@ -130,6 +130,27 @@ describe('AboutSection', () => {
     expect(w.find('iframe').exists()).toBe(false)
   })
 
+  it('connects every tab with the panel and the panel with the active tab', async () => {
+    mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
+    const w = await mountSection()
+    const buttons = w.findAll('button[role="tab"]')
+    const panel = w.find('[role="tabpanel"]')
+
+    expect(buttons.map((b) => b.attributes('id'))).toEqual([
+      'about-tab-anfang',
+      'about-tab-mkv',
+      'about-tab-heute',
+    ])
+    expect(buttons.every((b) => b.attributes('aria-controls') === panel.attributes('id'))).toBe(
+      true,
+    )
+    expect(panel.attributes('aria-labelledby')).toBe('about-tab-anfang')
+
+    await buttons[2]?.trigger('click')
+
+    expect(panel.attributes('aria-labelledby')).toBe('about-tab-heute')
+  })
+
   it('links to the Stolpersteine page as a real <a>, not raw markup', async () => {
     mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
     const w = await mountSection()

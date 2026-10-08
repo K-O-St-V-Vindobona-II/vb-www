@@ -121,8 +121,55 @@ describe('AppNav', () => {
     expect(w.find('#nav-panel').classes()).not.toContain('is-open')
   })
 
-  // The stylesheet cannot run in jsdom, so its rules are read as text; the anchor jumps
-  // themselves were measured in a browser.
+  it('names every link of the menu', async () => {
+    const w = await mountNav()
+
+    expect(w.findAll('#nav-panel a').map((a) => a.text())).toEqual([
+      'Über uns',
+      'Eindrücke',
+      'Programm',
+      'Mitglied werden',
+      'Kontakt',
+      'Intern',
+      'Instagram',
+    ])
+  })
+
+  it('toggles the mobile menu closed again with the same button', async () => {
+    const w = await mountNav()
+    const toggle = w.find('.menu-toggle')
+
+    await toggle.trigger('click')
+    await toggle.trigger('click')
+
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(w.find('#nav-panel').classes()).not.toContain('is-open')
+  })
+
+  it('points the menu button at the panel it opens', async () => {
+    const w = await mountNav()
+
+    const controlled = w.find('.menu-toggle').attributes('aria-controls')
+
+    expect(controlled).toBe('nav-panel')
+    expect(w.find(`#${controlled}`).exists()).toBe(true)
+  })
+
+  it.each(['https://intern.vindobona2.at/', 'http://www.instagram.com/vindobona2'])(
+    'closes the mobile menu after the external link %s is clicked',
+    async (href) => {
+      const w = await mountNav()
+      await w.find('.menu-toggle').trigger('click')
+
+      await w.find(`a[href="${href}"]`).trigger('click')
+
+      expect(w.find('#nav-panel').classes()).not.toContain('is-open')
+    },
+  )
+
+  // The stylesheet cannot run in jsdom, so its rules are read as text; the anchor jumps and the
+  // tab order themselves were measured in a browser (keyboard focus must not land on a link
+  // inside the closed panel).
   describe('the mobile menu panel layout', () => {
     const css = navSource.slice(navSource.indexOf('<style'))
     const rule = (selector: string, source = css) => {
@@ -144,6 +191,20 @@ describe('AppNav', () => {
 
     it('keeps the bar at the top of the screen while the page scrolls', () => {
       expect(rule('.app-nav')).toContain('position: sticky;')
+    })
+
+    it('takes its links out of the tab order until it is open', () => {
+      expect(rule('.links')).toContain('visibility: hidden;')
+      expect(rule('.links.is-open')).toContain('visibility: visible;')
+    })
+
+    it('hides them only after the closing animation, and shows them at once when opening', () => {
+      expect(rule('.links')).toContain('visibility 0s linear 0.3s')
+      expect(rule('.links.is-open')).toContain('transition-delay: 0s;')
+    })
+
+    it('shows the links on wide screens without a menu button', () => {
+      expect(rule('.links', desktop)).toContain('visibility: visible;')
     })
   })
 })

@@ -126,7 +126,11 @@ const closeMenu = () => {
    The panel is laid over the page (absolute), not pushed into the flow: the
    bar keeps its height when the menu opens and closes, so an anchor jump from
    an open menu is not shifted by the panel collapsing behind it. The bar
-   itself is translucent, so the panel needs an opaque background of its own. */
+   itself is translucent, so the panel needs an opaque background of its own.
+   `visibility: hidden` takes the closed links out of the tab order and the
+   accessibility tree; a clipped panel alone would still let the keyboard
+   focus land on links nobody can see. It switches only after the closing
+   animation has finished (and at once when opening). */
 .links {
   position: absolute;
   top: 100%;
@@ -138,16 +142,20 @@ const closeMenu = () => {
   gap: 0.9rem;
   max-height: 0;
   overflow: hidden;
+  visibility: hidden;
   padding: 0 1rem;
   background: rgb(var(--color-primary-rgb));
   transition:
     max-height 0.3s ease,
-    padding 0.3s ease;
+    padding 0.3s ease,
+    visibility 0s linear 0.3s;
 }
 
 .links.is-open {
   max-height: 20rem;
+  visibility: visible;
   padding: 0.25rem 1rem 1rem;
+  transition-delay: 0s;
 }
 
 .links a {
@@ -197,6 +205,7 @@ const closeMenu = () => {
     flex-direction: row;
     max-height: none;
     overflow: visible;
+    visibility: visible;
     padding: 0 2rem 0.75rem;
     background: none;
   }

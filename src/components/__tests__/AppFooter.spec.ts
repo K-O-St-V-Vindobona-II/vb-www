@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import type { SiteContent } from '@/services/api'
 
@@ -55,6 +55,16 @@ describe('AppFooter', () => {
     expect(w.text()).toContain(String(new Date().getFullYear()))
   })
 
+  it('shows the year of today, not the year of the build', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2031, 5, 15))
+
+    const w = await mountFooter()
+
+    vi.useRealTimers()
+    expect(w.text()).toContain('Copyright 2031 K.Ö.St.V.')
+  })
+
   it('renders only the enabled social links from the API', async () => {
     const w = await mountFooter()
     const hrefs = w.findAll('a').map((a) => a.attributes('href'))
@@ -92,14 +102,68 @@ describe('AppFooter', () => {
     expect(mailLink.text()).toBe('vindoboneninfo@gmail.com')
   })
 
-  it('closes the Impressum dialog via the close button', async () => {
-    const w = await mountFooter({ attachTo: document.body })
-    await w.find('.impressum-trigger').trigger('click')
-    await w.find('.dialog-close').trigger('click')
-    // No native <dialog> "open" support in jsdom, so this only confirms the
-    // close handler runs without throwing (see GallerySection for the same
-    // showModal()/close() optional-call guard).
-    expect(w.find('.dialog-close').exists()).toBe(true)
-    w.unmount()
+  // jsdom has no <dialog>.showModal()/close(); these stand in for the browser's.
+  describe('the Impressum dialog', () => {
+    const showModal = vi.fn()
+    const close = vi.fn()
+
+    beforeEach(() => {
+      showModal.mockReset()
+      close.mockReset()
+      Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+        value: showModal,
+        configurable: true,
+        writable: true,
+      })
+      Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+        value: close,
+        configurable: true,
+        writable: true,
+      })
+    })
+
+    afterEach(() => {
+      Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal')
+      Reflect.deleteProperty(HTMLDialogElement.prototype, 'close')
+    })
+
+    it('is opened as a modal by the Impressum button and not before', async () => {
+      const w = await mountFooter()
+      expect(showModal).not.toHaveBeenCalled()
+
+      await w.find('.impressum-trigger').trigger('click')
+
+      expect(showModal).toHaveBeenCalledOnce()
+      expect(showModal.mock.contexts[0]).toBe(w.find('dialog.impressum-dialog').element)
+    })
+
+    it('is closed by its close button, which is labelled for screen readers', async () => {
+      const w = await mountFooter()
+      const closeButton = w.find('.dialog-close')
+
+      await closeButton.trigger('click')
+
+      expect(closeButton.attributes('aria-label')).toBe('Schließen')
+      expect(close).toHaveBeenCalledOnce()
+      expect(showModal).not.toHaveBeenCalled()
+    })
+  })
+
+  it('opens the social links in a new tab without handing over the opener', async () => {
+    const w = await mountFooter()
+    const link = w.find('a[href="https://www.instagram.com/vindobona2"]')
+
+    expect(link.attributes('target')).toBe('_blank')
+    expect(link.attributes('rel')).toBe('noopener')
+  })
+
+  it('lists the Impressum data as labelled entries', async () => {
+    const w = await mountFooter()
+
+    expect(w.findAll('dt').map((dt) => dt.text())).toEqual([
+      'Medieninhaber, Herausgeber und Vereinssitz',
+      'ZVR-Zahl',
+      'Kontakt',
+    ])
   })
 })
