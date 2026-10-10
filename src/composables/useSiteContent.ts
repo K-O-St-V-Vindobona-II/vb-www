@@ -18,7 +18,9 @@ const state = reactive<SiteContentState>({
 // consumer). Five independent sections (AppNav, AppFooter, AboutSection,
 // ProgrammSection, TestimonialsSection) each call load() from their own
 // onMounted(); without this memoization every one of them would fire its
-// own /public/site-content request.
+// own /public/site-content request. Only an attempt in flight or a success stays memoised: a
+// failure clears it, so the next load() asks again instead of returning the old failure for the
+// rest of the session.
 let loadPromise: Promise<void> | null = null
 
 async function doLoad(): Promise<void> {
@@ -27,6 +29,7 @@ async function doLoad(): Promise<void> {
   try {
     state.content = await fetchSiteContent()
   } catch (err) {
+    loadPromise = null
     state.error = err instanceof Error ? err.message : 'Inhalte konnten nicht geladen werden.'
   } finally {
     state.loading = false

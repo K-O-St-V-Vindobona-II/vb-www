@@ -71,4 +71,44 @@ describe('parseParagraphs', () => {
     const result = parseParagraphs('[Mail](mailto:test@example.com)')
     expect(result[0]?.some((s) => s.type === 'link')).toBe(false)
   })
+
+  it('trims the blanks around a paragraph', () => {
+    expect(parseParagraphs('   Erster.   \n\n\t Zweiter. \t')).toEqual([
+      [{ type: 'text', value: 'Erster.' }],
+      [{ type: 'text', value: 'Zweiter.' }],
+    ])
+  })
+
+  it('drops a paragraph that holds only blanks', () => {
+    expect(parseParagraphs('Erster.\n\n   \n\nZweiter.')).toHaveLength(2)
+    expect(parseParagraphs('   \n\n  ')).toEqual([])
+  })
+
+  it.each([
+    ['a line with spaces in between', 'Erster.\n  \nZweiter.'],
+    ['Windows line endings', 'Erster.\r\n\r\nZweiter.'],
+    ['a tab-only line', 'Erster.\n\t\nZweiter.'],
+  ])('splits paragraphs at a blank line made of %s', (_name, raw) => {
+    expect(parseParagraphs(raw)).toEqual([
+      [{ type: 'text', value: 'Erster.' }],
+      [{ type: 'text', value: 'Zweiter.' }],
+    ])
+  })
+
+  it('reads the same links again in a second call (no state kept between calls)', () => {
+    const raw = '[A](https://a.com) und [B](https://b.com)'
+
+    expect(parseParagraphs(raw)).toEqual(parseParagraphs(raw))
+  })
+
+  it('links only the https and http forms, in any position of the text', () => {
+    const result = parseParagraphs(
+      '[a](http://a.com) [b](https://b.com) [c](ftp://c.com) [d](//d.com)',
+    )
+    const links = result[0]!.filter((segment) => segment.type === 'link')
+    expect(links.map((link) => link.type === 'link' && link.url)).toEqual([
+      'http://a.com',
+      'https://b.com',
+    ])
+  })
 })

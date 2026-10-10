@@ -2,9 +2,16 @@
   --color-primary: #a61a2c;
   --color-primary-dark: #780404;
   --color-primary-rgb: 166, 26, 44;
+  /* The brand red as a background behind white text. Unlike --color-primary (text and
+     links), it stays the same in dark mode: the lightened dark-mode red gives white text
+     only 3.5:1 and less, below the 4.5:1 that WCAG 1.4.3 asks for. */
+  --color-primary-solid: #a61a2c;
+  --color-primary-solid-dark: #780404;
   --color-accent: #65bc7b;
+  /* --color-accent is too light for text on a light page (2.3:1); this is for text. */
+  --color-success: #1f7a3a;
   --color-text: #333333;
-  --color-text-muted: #747474;
+  --color-text-muted: #6b6b6b;
   --color-bg: #ffffff;
   --color-bg-alt: #f9f9fb;
   --color-surface: #ffffff;
@@ -23,8 +30,8 @@
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
   --gradient-primary: linear-gradient(
     135deg,
-    var(--color-primary) 0%,
-    var(--color-primary-dark) 100%
+    var(--color-primary-solid) 0%,
+    var(--color-primary-solid-dark) 100%
   );
 }
 
@@ -38,6 +45,7 @@
     --color-primary-dark: #ff8a94;
     --color-primary-rgb: 227, 90, 108;
     --color-accent: #7fd99a;
+    --color-success: #7fd99a;
     --color-text: #e8e6e6;
     --color-text-muted: #a8a3a3;
     --color-bg: #16100f;

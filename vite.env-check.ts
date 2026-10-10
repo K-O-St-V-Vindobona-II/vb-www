@@ -1,3 +1,5 @@
+import { loadEnv } from 'vite'
+
 // Kept in sync by convention with the equivalent guards in vb-api
 // (app/core/config.py) and vb-intern (vite.env-check.ts) — not shared code,
 // since backend and frontends deploy and release independently.
@@ -43,4 +45,11 @@ export function validateViteEnv(env: Record<string, string | undefined>): void {
         'is not "production". Aborting.',
     )
   }
+}
+
+// Vite reads the ".env" files into import.meta.env only; process.env holds just the variables of
+// the shell. The guard therefore has to look at what the build will really use: the ".env*" files
+// of the mode, overridden by the variables of the shell (Vite's own rule).
+export function validateBuildEnv(mode: string, envDir: string): void {
+  validateViteEnv(loadEnv(mode, envDir, 'VITE_'))
 }

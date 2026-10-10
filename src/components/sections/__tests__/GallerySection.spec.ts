@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import type { SiteContent } from '@/services/api'
 
@@ -71,7 +71,10 @@ describe('GallerySection', () => {
     ])
     const w = await mountSection()
 
-    expect(w.findAll('img')).toHaveLength(2)
+    expect(w.findAll('img').map((img) => img.attributes('src'))).toEqual([
+      'https://x/1.jpg',
+      'https://x/2.jpg',
+    ])
     expect(w.find('figcaption').exists()).toBe(false)
     // Caption is only used as alt text (accessibility), never shown as visible text.
     expect(w.text()).not.toContain('DSC_0227')
@@ -156,5 +159,121 @@ describe('GallerySection', () => {
     expect(w.find('dialog').exists()).toBe(false)
 
     w.unmount()
+  })
+
+  it.each([
+    ['is missing', null],
+    ['is empty', ''],
+    ['is only blanks', '   '],
+  ])('names the image by the fallback text when its caption %s', async (_case, caption) => {
+    mockFetchGalleryImages.mockResolvedValue([
+      { id: '1', url: 'https://x/1.jpg', caption, width: 800, height: 600 },
+    ])
+    const w = await mountSection()
+
+    expect(w.find('.gallery-item-trigger img').attributes('alt')).toBe(
+      'Impression von Vindobona II',
+    )
+  })
+
+  it('gives every image its size, so the page does not jump when the image arrives', async () => {
+    mockFetchGalleryImages.mockResolvedValue([
+      { id: '1', url: 'https://x/1.jpg', caption: null, width: 800, height: 600 },
+    ])
+    const w = await mountSection()
+
+    expect(w.find('.gallery-item-trigger img').attributes()).toMatchObject({
+      width: '800',
+      height: '600',
+      loading: 'lazy',
+    })
+  })
+
+  // jsdom has no <dialog>.showModal()/close(); these stand in for the browser's.
+  describe('the lightbox dialog', () => {
+    const showModal = vi.fn()
+    const close = vi.fn()
+
+    beforeEach(() => {
+      showModal.mockReset()
+      close.mockReset()
+      Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+        value: showModal,
+        configurable: true,
+        writable: true,
+      })
+      Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+        value: close,
+        configurable: true,
+        writable: true,
+      })
+      mockFetchGalleryImages.mockResolvedValue([
+        { id: '1', url: 'https://x/1.jpg', caption: 'Ostermesse', width: 800, height: 600 },
+        { id: '2', url: 'https://x/2.jpg', caption: null, width: 400, height: 300 },
+      ])
+    })
+
+    afterEach(() => {
+      Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal')
+      Reflect.deleteProperty(HTMLDialogElement.prototype, 'close')
+    })
+
+    async function openFirstImage() {
+      const w = await mountSection({ attachTo: document.body })
+      await w.findAll('.gallery-item-trigger')[0]?.trigger('click')
+      await flushPromises()
+      return w
+    }
+
+    it('is opened as a modal, so it covers the page and traps the focus', async () => {
+      const w = await openFirstImage()
+
+      expect(showModal).toHaveBeenCalledOnce()
+      expect(showModal.mock.contexts[0]).toBe(w.find('dialog').element)
+      w.unmount()
+    })
+
+    it('shows the image that was clicked, not the first one', async () => {
+      const w = await mountSection({ attachTo: document.body })
+
+      await w.findAll('.gallery-item-trigger')[1]?.trigger('click')
+      await flushPromises()
+
+      expect(w.find('dialog img').attributes('src')).toBe('https://x/2.jpg')
+      expect(w.find('dialog img').attributes('alt')).toBe('Impression von Vindobona II')
+      w.unmount()
+    })
+
+    it('is closed by a click on the backdrop, which the browser reports as a click on the dialog itself', async () => {
+      const w = await openFirstImage()
+
+      await w.find('dialog').trigger('click')
+      await flushPromises()
+
+      expect(close).toHaveBeenCalledOnce()
+      expect(w.find('dialog').exists()).toBe(false)
+      w.unmount()
+    })
+
+    it('stays open when the enlarged image itself is clicked', async () => {
+      const w = await openFirstImage()
+
+      await w.find('dialog img').trigger('click')
+      await flushPromises()
+
+      expect(close).not.toHaveBeenCalled()
+      expect(w.find('dialog').exists()).toBe(true)
+      w.unmount()
+    })
+
+    it('has a close button that is labelled for screen readers', async () => {
+      const w = await openFirstImage()
+
+      expect(w.find('.lightbox-close').attributes('aria-label')).toBe('Schließen')
+      await w.find('.lightbox-close').trigger('click')
+
+      expect(close).toHaveBeenCalledOnce()
+      w.unmount()
+    })
   })
 })

@@ -20,8 +20,8 @@ const SITE_CONTENT: SiteContent = {
     gallery_heading: 'Eindrücke',
   },
   programm_hints: [
-    { id: 1, text: 'Alle Veranstaltungen beginnen c.t.' },
-    { id: 2, text: 'Alle Veranstaltungen finden auf der Bude Vindobonae statt.' },
+    { id: 'item-uuid-1', text: 'Alle Veranstaltungen beginnen c.t.' },
+    { id: 'item-uuid-2', text: 'Alle Veranstaltungen finden auf der Bude Vindobonae statt.' },
   ],
   quotes: [],
   social_links: [],
@@ -53,10 +53,21 @@ describe('ProgrammSection', () => {
   it('embeds the admin-configured Google Calendar', async () => {
     mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
     const w = await mountSection()
+
     const iframe = w.find('iframe')
-    expect(iframe.attributes('src')).toContain(
-      encodeURIComponent('h7d2qp0jlg603cvq2aabdn2k5o@group.calendar.google.com'),
+    expect(iframe.attributes('src')).toBe(
+      'https://calendar.google.com/calendar/embed?src=h7d2qp0jlg603cvq2aabdn2k5o%40group.calendar.google.com&ctz=Europe%2FVienna',
     )
+    expect(iframe.attributes('title')).toBe('Veranstaltungskalender')
+    expect(iframe.attributes('loading')).toBe('lazy')
+  })
+
+  it('titles the section and its notes', async () => {
+    mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
+    const w = await mountSection()
+
+    expect(w.find('h2').text()).toBe('Programm')
+    expect(w.find('.hinweise h3').text()).toBe('Hinweise')
   })
 
   it('sends an explicit referrer policy with the calendar frame', async () => {
@@ -65,11 +76,37 @@ describe('ProgrammSection', () => {
     expect(w.find('iframe').attributes('referrerpolicy')).toBe('strict-origin-when-cross-origin')
   })
 
-  it('shows the Hinweise text from the API', async () => {
+  it('escapes the calendar id in the address of the frame and of the download', async () => {
+    mockFetchSiteContent.mockResolvedValue({
+      ...SITE_CONTENT,
+      settings: { ...SITE_CONTENT.settings, programm_calendar_id: 'a&b=c/d' },
+    })
+    const w = await mountSection()
+
+    expect(w.find('iframe').attributes('src')).toContain('src=a%26b%3Dc%2Fd&ctz=')
+    expect(w.find('.ical-link').attributes('href')).toContain('/ical/a%26b%3Dc%2Fd/public/')
+  })
+
+  it('shows no calendar and no download link when no calendar is configured', async () => {
+    mockFetchSiteContent.mockResolvedValue({
+      ...SITE_CONTENT,
+      settings: { ...SITE_CONTENT.settings, programm_calendar_id: '' },
+    })
+    const w = await mountSection()
+
+    expect(w.find('iframe').exists()).toBe(false)
+    expect(w.find('.ical-link').exists()).toBe(false)
+    expect(w.text()).toContain('c.t.')
+  })
+
+  it('shows the Hinweise text from the API, one list entry per hint, in order', async () => {
     mockFetchSiteContent.mockResolvedValue(SITE_CONTENT)
     const w = await mountSection()
-    expect(w.text()).toContain('c.t.')
-    expect(w.text()).toContain('Bude Vindobonae')
+
+    expect(w.findAll('.hinweise-list li').map((li) => li.text())).toEqual([
+      '✓Alle Veranstaltungen beginnen c.t.',
+      '✓Alle Veranstaltungen finden auf der Bude Vindobonae statt.',
+    ])
   })
 
   it('links to the .ical download of the configured calendar', async () => {

@@ -61,4 +61,24 @@ describe('useGallery', () => {
     expect(error.value).toBeNull()
     expect(images.value).toEqual([])
   })
+
+  it('load() shows the loading state again while it retries', async () => {
+    mockFetchGalleryImages.mockRejectedValueOnce(new Error('Netzwerkfehler'))
+    const { loading, load } = useGallery()
+    await load()
+    expect(loading.value).toBe(false)
+
+    let finish: (images: never[]) => void = () => {}
+    mockFetchGalleryImages.mockReturnValueOnce(
+      new Promise<never[]>((resolve) => {
+        finish = resolve
+      }),
+    )
+    const retry = load()
+
+    expect(loading.value).toBe(true)
+    finish([])
+    await retry
+    expect(loading.value).toBe(false)
+  })
 })

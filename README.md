@@ -6,8 +6,12 @@ library (long page with anchor navigation).
 
 ## Architecture
 
-- Static structure, text/CTA content hardcoded in the section components
-  (`src/components/sections/`) — mirroring the old page, unchanged for years.
+- The hero, membership and contact sections keep their text in the section
+  components (`src/components/sections/`). Everything the club edits — the about
+  tabs, programme hints and calendar, quotes, social links, the video and the
+  gallery heading — is loaded from `vb-api` at runtime
+  (`GET /api/public/site-content`, unauthenticated) and managed in the
+  mini-CMS area of `vb-intern` ("www administration").
 - The image gallery (`GallerySection.vue`) is loaded from `vb-api` at
   runtime (`GET /api/public/gallery`, unauthenticated). It's managed via a
   mini-CMS area in `vb-intern` ("www administration" → "Gallery").
@@ -75,7 +79,9 @@ npm run lint:fix
 
 ## Deployment
 
-`Dockerfile` builds a static nginx image. The backend URL — just like in
+`Dockerfile` builds a static nginx image on `nginx-unprivileged`: nginx runs
+as an unprivileged user (uid 101) and listens on port **8080**, not 80, so the
+container needs no capabilities at all. The backend URL — just like in
 `vb-intern` — is read as runtime configuration rather than baked into the
 bundle at build time: an nginx entrypoint script
 (`docker/docker-entrypoint.d/40-generate-runtime-config.sh`) generates
@@ -83,10 +89,16 @@ bundle at build time: an nginx entrypoint script
 unprefixed container environment variable `API_BASE_URL` (see
 `src/runtimeConfig.ts`). The same `:latest` image thus runs unchanged on
 every stage — the respective API URL comes exclusively from the container
-environment, no stage-specific rebuild needed.
+environment, no stage-specific rebuild needed. The hook refuses to start the
+container when `API_BASE_URL` is missing, is not a plain `http://`/`https://`
+URL, or contains a character that could end the JavaScript string it is
+written into (quote, backslash, angle bracket, `$`, backtick, whitespace).
 
 The CI/CD pipeline (`.github/workflows/ci-cd.yml`) builds this image
-automatically on every merge to `main` and pushes it to `ghcr.io`. The
+automatically on every merge to `main` and pushes it to `ghcr.io` (only from
+`main`; a run on another branch never publishes `:latest`), after a smoke test
+that boots the image read-only with all capabilities dropped and checks what it
+serves. The
 rollout itself happens outside this pipeline: the target system's own
 `podman-auto-update.timer` picks up the new `:latest` image automatically,
 or an immediate deploy is triggered manually via `--tags deploy-www` — see
@@ -102,8 +114,12 @@ Routing-Bibliothek (Long-Page mit Anchor-Nav).
 
 ## Architektur
 
-- Statischer Aufbau, Text/CTA-Inhalte hartcodiert in den Sektions-Komponenten
-  (`src/components/sections/`) — analog zur alten, seit Jahren unveränderten Seite.
+- Die Sektionen Hero, Mitglied werden und Kontakt halten ihren Text in den
+  Sektions-Komponenten (`src/components/sections/`). Alles, was der Verein
+  selbst pflegt — About-Tabs, Programm-Hinweise und -Kalender, Zitate,
+  Social-Links, das Video und die Galerie-Überschrift — wird zur Laufzeit aus
+  `vb-api` geladen (`GET /api/public/site-content`, unauthentifiziert) und im
+  Mini-CMS-Bereich von `vb-intern` ("www-Administration") verwaltet.
 - Die Bildergalerie (`GallerySection.vue`) wird zur Laufzeit aus `vb-api`
   geladen (`GET /api/public/gallery`, unauthentifiziert). Verwaltet wird sie
   über einen Mini-CMS-Bereich in `vb-intern` ("www-Administration" → "Galerie").
@@ -174,18 +190,27 @@ npm run lint:fix
 
 ## Deployment
 
-`Dockerfile` baut ein statisches Nginx-Image. Die Backend-URL wird — genau wie
-bei `vb-intern` — als Laufzeit-Konfiguration gelesen, nicht mehr zur Build-Zeit
+`Dockerfile` baut ein statisches Nginx-Image auf `nginx-unprivileged`: nginx
+läuft als unprivilegierter Benutzer (uid 101) und lauscht auf Port **8080**,
+nicht 80, der Container braucht daher keinerlei Capabilities. Die Backend-URL
+wird — genau wie bei `vb-intern` — als Laufzeit-Konfiguration gelesen, nicht mehr zur Build-Zeit
 ins Bundle eingebrannt: ein nginx-Entrypoint-Skript
 (`docker/docker-entrypoint.d/40-generate-runtime-config.sh`) generiert bei
 jedem Container-Start `config.js` (`window.__APP_CONFIG__`) aus der
 unpräfixierten Container-Umgebungsvariable `API_BASE_URL` (siehe
 `src/runtimeConfig.ts`). Dasselbe `:latest`-Image läuft damit unverändert auf
 jeder Stage — die jeweilige API-URL kommt ausschließlich über die
-Container-Umgebung, kein stage-spezifischer Rebuild nötig.
+Container-Umgebung, kein stage-spezifischer Rebuild nötig. Das Skript
+verweigert den Container-Start, wenn `API_BASE_URL` fehlt, keine einfache
+`http://`/`https://`-URL ist oder ein Zeichen enthält, das den JavaScript-String,
+in den sie geschrieben wird, beenden könnte (Anführungszeichen, Backslash,
+spitze Klammer, `$`, Backtick, Leerraum).
 
 Die CI/CD-Pipeline (`.github/workflows/ci-cd.yml`) baut dieses Image bei jedem
-Merge nach `main` automatisch und pusht es nach `ghcr.io`. Das Rollout selbst
+Merge nach `main` automatisch und pusht es nach `ghcr.io` (nur von `main`; ein
+Lauf auf einem anderen Branch veröffentlicht nie `:latest`), nach einem
+Smoke-Test, der das Image schreibgeschützt und ohne jede Capability startet und
+prüft, was es ausliefert. Das Rollout selbst
 läuft außerhalb dieser Pipeline: `podman-auto-update.timer` auf dem Zielsystem
 holt das neue `:latest`-Image automatisch, oder ein sofortiger Deploy wird
 manuell per `--tags deploy-www` ausgelöst — siehe

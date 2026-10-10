@@ -18,9 +18,11 @@ const SOME_CONTENT: SiteContent = {
     programm_calendar_id: 'abc@group.calendar.google.com',
     gallery_heading: 'Eindrücke',
   },
-  programm_hints: [{ id: 1, text: 'Hinweis' }],
-  quotes: [{ id: 1, quote: 'Zitat', author: 'Jemand' }],
-  social_links: [{ id: 1, platform: 'instagram', label: 'Instagram', url: 'https://x' }],
+  programm_hints: [{ id: 'item-uuid-1', text: 'Hinweis' }],
+  quotes: [{ id: 'item-uuid-1', quote: 'Zitat', author: 'Jemand' }],
+  social_links: [
+    { id: 'item-uuid-1', platform: 'instagram', label: 'Instagram', url: 'https://x' },
+  ],
 }
 
 describe('useSiteContent', () => {
@@ -90,5 +92,38 @@ describe('useSiteContent', () => {
     await load()
 
     expect(mockFetchSiteContent).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks again after a failed load instead of returning the old failure', async () => {
+    mockFetchSiteContent.mockRejectedValueOnce(new Error('Netzwerkfehler'))
+    mockFetchSiteContent.mockResolvedValueOnce(SOME_CONTENT)
+    const { useSiteContent } = await import('@/composables/useSiteContent')
+    const { content, loading, error, load } = useSiteContent()
+
+    await load()
+    expect(error.value).toBe('Netzwerkfehler')
+
+    const retry = load()
+    expect(loading.value).toBe(true)
+    expect(error.value).toBeNull()
+    await retry
+
+    expect(mockFetchSiteContent).toHaveBeenCalledTimes(2)
+    expect(content.value).toEqual(SOME_CONTENT)
+    expect(loading.value).toBe(false)
+    expect(error.value).toBeNull()
+  })
+
+  it('lets callers that arrive while a request is failing share that one attempt', async () => {
+    mockFetchSiteContent.mockRejectedValue(new Error('Netzwerkfehler'))
+    const { useSiteContent } = await import('@/composables/useSiteContent')
+    const consumerA = useSiteContent()
+    const consumerB = useSiteContent()
+
+    await Promise.all([consumerA.load(), consumerB.load()])
+
+    expect(mockFetchSiteContent).toHaveBeenCalledTimes(1)
+    expect(consumerA.error.value).toBe('Netzwerkfehler')
+    expect(consumerB.error.value).toBe('Netzwerkfehler')
   })
 })

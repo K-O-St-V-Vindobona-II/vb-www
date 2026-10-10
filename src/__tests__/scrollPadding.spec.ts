@@ -1,10 +1,9 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { describe, it, expect } from 'vitest'
+import styles from '../style.css?raw'
 
-// The stylesheet is read from disk: Vitest replaces the content of a CSS import with an empty
-// string, so `?raw` would leave every rule check below silently blind.
-const styles = readFileSync(resolve(__dirname, '../style.css'), 'utf8')
+// Vitest replaces the content of a stylesheet import with an empty string unless the file is
+// listed in `test.css.include` (vitest.config.ts); the first case fails if that listing is lost,
+// so the rule checks below can never pass blind.
 
 const rule = (selector: string, source: string) => {
   const start = source.indexOf(`${selector} {`)

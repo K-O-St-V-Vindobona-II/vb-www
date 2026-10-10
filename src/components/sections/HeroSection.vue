@@ -11,7 +11,7 @@ import heroImage from '@/assets/images/hero.jpg'
       <p class="subtitle">Deine Verbindung in Wien</p>
       <p class="motto">Numquam retro&hellip; ein Leben lang</p>
     </div>
-    <a href="#about" class="scroll-hint" aria-hidden="true">
+    <a href="#about" class="scroll-hint" aria-hidden="true" tabindex="-1">
       <span class="scroll-chevron" />
     </a>
   </section>

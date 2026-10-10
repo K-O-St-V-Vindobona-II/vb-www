@@ -26,6 +26,12 @@ void target
 const selectedImage = ref<GalleryImage | null>(null)
 const dialogRef = ref<HTMLDialogElement | null>(null)
 
+const FALLBACK_ALT = 'Impression von Vindobona II'
+
+// A missing, empty or blank caption must not become an empty alt attribute: the image is the only
+// content of its button, so an empty alt leaves the button without a name.
+const altText = (image: GalleryImage): string => image.caption?.trim() || FALLBACK_ALT
+
 const openImage = async (image: GalleryImage) => {
   selectedImage.value = image
   await nextTick()
@@ -39,8 +45,9 @@ const closeImage = () => {
   selectedImage.value = null
 }
 
-// Native <dialog> also closes on Escape/backdrop click, firing this same
-// event — keep selectedImage in sync so the dialog unmounts cleanly.
+// Native <dialog> also closes on Escape, firing this same event, so keep
+// selectedImage in sync so the dialog unmounts cleanly. A click on the backdrop
+// does not close a modal dialog by itself; it is handled in the template.
 const onDialogClose = () => {
   selectedImage.value = null
 }
@@ -64,18 +71,26 @@ const onDialogClose = () => {
         <button type="button" class="gallery-item-trigger" @click="openImage(image)">
           <img
             :src="image.url"
-            :alt="image.caption ?? 'Impression von Vindobona II'"
+            :alt="altText(image)"
+            :width="image.width"
+            :height="image.height"
             loading="lazy"
           />
         </button>
       </figure>
     </div>
 
-    <dialog v-if="selectedImage" ref="dialogRef" class="lightbox" @close="onDialogClose">
+    <dialog
+      v-if="selectedImage"
+      ref="dialogRef"
+      class="lightbox"
+      @click.self="closeImage"
+      @close="onDialogClose"
+    >
       <button type="button" class="lightbox-close" aria-label="Schließen" @click="closeImage">
         &times;
       </button>
-      <img :src="selectedImage.url" :alt="selectedImage.caption ?? 'Impression von Vindobona II'" />
+      <img :src="selectedImage.url" :alt="altText(selectedImage)" />
     </dialog>
   </section>
 </template>

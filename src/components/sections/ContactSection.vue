@@ -7,7 +7,10 @@ const name = ref('')
 const email = ref('')
 const message = ref('')
 // Honeypot: stays empty for real users (hidden via CSS below), bots that
-// blindly fill every field trip the backend's validation.
+// blindly fill every field trip the backend's validation. The payload key stays
+// `website` (the API's field name); the element's own name is deliberately not
+// one that form fillers and password managers recognise, which would fill it
+// for a real visitor and get a genuine message rejected.
 const website = ref('')
 
 const submitting = ref(false)
@@ -83,7 +86,7 @@ void target
         <input
           v-model="website"
           type="text"
-          name="website"
+          name="contact-trap"
           class="honeypot"
           tabindex="-1"
           autocomplete="off"
@@ -94,10 +97,10 @@ void target
           {{ submitting ? 'Wird gesendet…' : 'Senden' }}
         </button>
 
-        <p v-if="success" class="form-message success">
+        <p v-if="success" class="form-message success" role="status">
           Vielen Dank für deine Mitteilung. Sie wurde versandt.
         </p>
-        <p v-if="error" class="form-message error">{{ error }}</p>
+        <p v-if="error" class="form-message error" role="alert">{{ error }}</p>
       </form>
 
       <div class="contact-info">
@@ -227,7 +230,7 @@ void target
 }
 
 .form-message.success {
-  color: var(--color-accent);
+  color: var(--color-success);
   font-weight: 600;
 }
 

@@ -28,13 +28,19 @@ describe('useScrollReveal', () => {
     expect(result.visible.value).toBe(true)
   })
 
-  it('becomes visible immediately when the visitor prefers reduced motion', () => {
+  it('becomes visible immediately, without observing, when the visitor prefers reduced motion', () => {
+    // The observer exists here, so only the reduced-motion check can make the element visible.
+    const observer = vi.fn().mockImplementation(function () {
+      return { observe: vi.fn(), disconnect: vi.fn() }
+    })
+    vi.stubGlobal('IntersectionObserver', observer)
     vi.stubGlobal(
       'matchMedia',
       vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia,
     )
     const { result } = mountComposable()
     expect(result.visible.value).toBe(true)
+    expect(observer).not.toHaveBeenCalled()
   })
 
   it('becomes visible immediately when the target ref was never bound to an element', () => {
@@ -95,5 +101,43 @@ describe('useScrollReveal', () => {
     capturedCallback!([{ isIntersecting: false } as IntersectionObserverEntry], {} as never)
 
     expect(result.visible.value).toBe(false)
+  })
+
+  it('reveals an element as soon as any part is in view, however tall it is', () => {
+    // A share of the element (a threshold above 0) can never be reached by an element taller than
+    // the viewport divided by that share, so a long gallery would stay hidden for ever.
+    const observer = vi.fn().mockImplementation(function () {
+      return { observe: vi.fn(), disconnect: vi.fn() }
+    })
+    vi.stubGlobal('IntersectionObserver', observer)
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }))
+
+    mountComposable()
+
+    expect(observer).toHaveBeenCalledWith(expect.any(Function), {
+      threshold: 0,
+      rootMargin: '0px 0px -10% 0px',
+    })
+  })
+
+  it('observes the bound element and stops observing when the component goes away', () => {
+    const observe = vi.fn()
+    const disconnect = vi.fn()
+    vi.stubGlobal(
+      'IntersectionObserver',
+      vi.fn().mockImplementation(function () {
+        return { observe, disconnect }
+      }),
+    )
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }))
+
+    const { wrapper } = mountComposable()
+
+    expect(observe).toHaveBeenCalledWith(wrapper.element)
+    expect(disconnect).not.toHaveBeenCalled()
+
+    wrapper.unmount()
+
+    expect(disconnect).toHaveBeenCalledOnce()
   })
 })
