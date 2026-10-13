@@ -3,5 +3,5 @@ import { createApp } from 'vue'
 import App from './App.vue'
 
 // No router: App.vue is a single long page with anchor-based section
-// navigation, not a multi-view SPA (see README.md's Architecture section).
+// navigation, not a multi-view SPA (see README.md, section 3).
 createApp(App).mount('#app')
