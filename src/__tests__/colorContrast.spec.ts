@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import css from '../style.css?raw'
 import contactSource from '../components/sections/ContactSection.vue?raw'
