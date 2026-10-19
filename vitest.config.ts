@@ -5,6 +5,9 @@ import viteConfig from './vite.config'
 export default defineConfig((configEnv) =>
   mergeConfig(viteConfig(configEnv), {
     test: {
+      // jsdom is the default for every spec. A spec that touches no DOM opts
+      // out with the first-line docblock `// @vitest-environment node`, which
+      // skips building a jsdom window for that file.
       environment: 'jsdom',
       // Vitest turns stylesheets into empty text unless they are listed here;
       // the scroll padding spec reads the raw text of the global stylesheet.
