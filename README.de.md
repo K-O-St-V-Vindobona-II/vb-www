@@ -61,7 +61,7 @@ src/utils/                 Helfer (zum Beispiel verlinkter Text)
 ### Einrichtung
 
 - Podman mit laufendem `vb-www`-Entwicklungs-Container aus den lokalen Entwicklungs-Quadlets ([`vb-deploy` 5.7](https://github.com/K-O-St-V-Vindobona-II/vb-deploy/blob/main/README.de.md#57-lokale-entwicklungsumgebung)). Er führt `npm run dev` (Vite-Dev-Server mit Hot-Reload) mit eingehängtem Quellordner aus, auf `127.0.0.1:20002`. Die API, mit der er spricht, wird über `VITE_API_BASE_URL` festgelegt.
-- Node `^22.18.0` oder `>=24.12.0` (das Container-Image nutzt Node 24).
+- Node `^22.18.0` oder `>=24.12.0` (das Container-Image nutzt Node 26).
 - Führe jeden Befehl über `podman exec vb-www ...` aus; führe `npm install` nie auf dem Host aus.
 
 ```bash
