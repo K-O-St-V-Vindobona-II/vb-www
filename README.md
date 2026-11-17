@@ -61,7 +61,7 @@ src/utils/                 helpers (for example linked text)
 ### Setup
 
 - Podman with the `vb-www` development container running from the local development Quadlets ([`vb-deploy` 5.7](https://github.com/K-O-St-V-Vindobona-II/vb-deploy/blob/main/README.md#57-local-development-environment)). It runs `npm run dev` (Vite dev server with hot reload) with the source folder mounted, on `127.0.0.1:20002`. The API it talks to is configured by `VITE_API_BASE_URL`.
-- Node `^22.18.0` or `>=24.12.0` (the container image uses Node 24).
+- Node `^22.18.0` or `>=24.12.0` (the container image uses Node 26).
 - Run every command through `podman exec vb-www ...`; never run `npm install` on the host.
 
 ```bash
